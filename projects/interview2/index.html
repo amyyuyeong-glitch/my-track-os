@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>내 트랙 OS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+
+    /* ── 헤더 ── */
+    header { padding: 32px 24px 0; max-width: 1200px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; }
+    h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .subtitle { font-size: 13px; color: #888; margin-top: 4px; }
+    .header-actions { display: flex; gap: 8px; }
+    .header-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+    .header-btn-primary { background: #1a1a1a; color: #fff; }
+    .header-btn-secondary { background: #fff; color: #555; border: 1.5px solid #e0e0e0; }
+    .header-btn:hover { opacity: 0.8; }
+
+    /* ── 탭 ── */
+    .tab-bar { max-width: 1200px; margin: 24px auto 0; padding: 0 24px; display: flex; gap: 4px; }
+    .tab-btn { padding: 9px 20px; border-radius: 100px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .tab-btn.active { background: #1a1a1a; color: #fff; }
+    .tab-btn:not(.active) { background: #fff; color: #888; }
+    .tab-btn:not(.active):hover { color: #333; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── 컨디션 ── */
+    .condition-bar { max-width: 1200px; margin: 16px auto 0; padding: 0 24px; }
+    .condition-card { background: #fff; border-radius: 16px; padding: 20px 24px; }
+    .condition-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .condition-label { font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .condition-selected { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .condition-selected-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 600; }
+    .condition-energy-bar { flex: 1; height: 6px; background: #f0f0f0; border-radius: 100px; overflow: hidden; max-width: 160px; }
+    .condition-energy-fill { height: 100%; border-radius: 100px; transition: width 0.4s ease; }
+    .condition-strategy { font-size: 12px; color: #888; line-height: 1.6; padding: 10px 14px; background: #f9f9f7; border-radius: 10px; margin-bottom: 14px; }
+    .condition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    @media (max-width: 600px) { .condition-grid { grid-template-columns: repeat(2, 1fr); } }
+    .condition-btn { padding: 10px 8px; border-radius: 12px; border: 1.5px solid #e8e8e8; background: #fff; font-size: 12px; cursor: pointer; transition: all 0.15s; color: #555; text-align: center; font-family: inherit; }
+    .condition-btn:hover { border-color: #999; color: #333; }
+    .condition-btn.active { border-color: transparent; color: #fff; }
+    .condition-btn .cond-emoji { font-size: 18px; display: block; margin-bottom: 4px; }
+    .condition-btn .cond-name { font-weight: 600; display: block; margin-bottom: 2px; }
+    .condition-btn .cond-time { font-size: 10px; opacity: 0.8; display: block; }
+
+    /* ── 칸반 ── */
+    .kanban-wrapper { max-width: 1200px; margin: 20px auto 0; padding: 0 24px; overflow-x: auto; }
+    .tracks { display: flex; gap: 16px; align-items: flex-start; min-width: min-content; }
+    .track-card { background: #fff; border-radius: 16px; padding: 24px; position: relative; transition: box-shadow 0.2s; width: 300px; flex-shrink: 0; }
+    .track-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .track-card.highlighted { outline: 2px solid #1a1a1a; }
+    .track-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 8px; }
+    .track-name-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .track-name { font-size: 16px; font-weight: 700; cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; transition: background 0.15s; }
+    .track-name:hover { background: #f5f5f0; }
+    .track-name-input { font-size: 16px; font-weight: 700; border: none; border-bottom: 2px solid #1a1a1a; outline: none; background: transparent; font-family: inherit; width: 100%; padding: 2px 0; }
+    .track-menu-btn { background: none; border: none; font-size: 18px; color: #ccc; cursor: pointer; padding: 2px 4px; border-radius: 6px; line-height: 1; flex-shrink: 0; }
+    .track-menu-btn:hover { color: #888; background: #f5f5f0; }
+    .track-badge { font-size: 11px; padding: 4px 10px; border-radius: 100px; font-weight: 600; flex-shrink: 0; }
+    .badge-green { background: #e6f9f0; color: #1a9e5c; }
+    .badge-yellow { background: #fff8e1; color: #b07c00; }
+    .badge-red { background: #ffeaea; color: #cc3333; }
+    .section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .goal-empty { background: #fafafa; border: 1.5px dashed #e0e0e0; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .goal-empty:hover { border-color: #999; background: #f5f5f0; }
+    .goal-empty-text { font-size: 13px; color: #bbb; display: block; margin-bottom: 8px; }
+    .goal-find-btn { font-size: 12px; font-weight: 700; color: #1a1a1a; background: #fff; border: 1.5px solid #1a1a1a; border-radius: 100px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
+    .goal-find-btn:hover { background: #1a1a1a; color: #fff; }
+    .goal-text-display { font-size: 14px; color: #1a1a1a; line-height: 1.6; padding: 10px 12px; background: #f5f5f0; border-radius: 10px; cursor: pointer; position: relative; margin-bottom: 16px; }
+    .goal-text-display:hover::after { content: '수정'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #aaa; }
+    .pump-primer { background: #f5f5f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .pump-label { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .pump-guide-link { font-size: 11px; color: #aaa; cursor: pointer; text-decoration: underline; }
+    .pump-guide-link:hover { color: #555; }
+    .pump-action-input { width: 100%; border: none; border-bottom: 1.5px solid #e0e0e0; padding: 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; outline: none; background: transparent; font-family: inherit; }
+    .pump-action-input:focus { border-bottom-color: #333; }
+    .pump-hint { font-size: 11px; color: #aaa; margin-top: 6px; }
+    .do-btn { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; font-family: inherit; }
+    .do-btn:hover { opacity: 0.85; }
+    .recommend-tag { display: inline-block; font-size: 11px; background: #1a1a1a; color: #fff; padding: 3px 8px; border-radius: 100px; margin-bottom: 12px; }
+    .steps-toggle { font-size: 12px; color: #aaa; cursor: pointer; margin-bottom: 8px; user-select: none; display: flex; align-items: center; gap: 6px; }
+    .steps-toggle:hover { color: #555; }
+    .steps-list { list-style: none; margin-bottom: 16px; }
+    .step-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #555; }
+    .step-item:last-child { border-bottom: none; }
+    .step-check { width: 16px; height: 16px; accent-color: #1a1a1a; cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+    .step-text { flex: 1; line-height: 1.4; }
+    .step-text.done { text-decoration: line-through; color: #bbb; }
+    .add-step { font-size: 12px; color: #aaa; cursor: pointer; padding: 4px 0; display: inline-block; margin-bottom: 16px; }
+    .add-step:hover { color: #555; }
+    .track-menu { position: absolute; top: 56px; right: 24px; background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 50; min-width: 140px; overflow: hidden; }
+    .track-menu-item { padding: 12px 16px; font-size: 13px; cursor: pointer; transition: background 0.1s; }
+    .track-menu-item:hover { background: #f5f5f0; }
+    .track-menu-item.danger { color: #cc3333; }
+    .track-menu-item.danger:hover { background: #ffeaea; }
+    .add-track-card { width: 300px; flex-shrink: 0; border: 2px dashed #e0e0e0; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 40px 24px; cursor: pointer; transition: all 0.15s; color: #bbb; background: transparent; min-height: 200px; }
+    .add-track-card:hover { border-color: #999; color: #666; background: #fff; }
+    .add-track-icon { font-size: 28px; }
+    .add-track-text { font-size: 14px; font-weight: 600; }
+
+    /* ── 마중물 로그 ── */
+    .activity-log { max-width: 1200px; margin: 32px auto 0; padding: 0 24px; }
+    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .log-title { font-size: 15px; font-weight: 700; }
+    .log-clear-btn { font-size: 12px; color: #bbb; cursor: pointer; background: none; border: none; font-family: inherit; }
+    .log-clear-btn:hover { color: #cc3333; }
+    .log-empty { background: #fff; border-radius: 16px; padding: 40px; text-align: center; font-size: 13px; color: #bbb; }
+    .log-day-group { margin-bottom: 20px; }
+    .log-day-label { font-size: 12px; font-weight: 700; color: #aaa; margin-bottom: 8px; padding-left: 4px; }
+    .log-entries { display: flex; flex-direction: column; gap: 8px; }
+    .log-entry { background: #fff; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+    .log-cond-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .log-body { flex: 1; min-width: 0; }
+    .log-track-name { font-size: 12px; font-weight: 700; color: #888; margin-bottom: 2px; }
+    .log-action { font-size: 14px; color: #1a1a1a; font-weight: 500; }
+    .log-time { font-size: 11px; color: #bbb; flex-shrink: 0; }
+    .log-cond-tag { font-size: 11px; padding: 3px 8px; border-radius: 100px; font-weight: 600; flex-shrink: 0; }
+
+    /* ── 데일리 체크 탭 ── */
+    .daily-panel { max-width: 1200px; margin: 20px auto 60px; padding: 0 24px; }
+
+    .daily-today-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .daily-today-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .daily-today-title { font-size: 16px; font-weight: 700; }
+    .daily-today-date { font-size: 13px; color: #888; }
+
+    /* 상태 멀티셀렉트 */
+    .daily-field { margin-bottom: 20px; }
+    .daily-field-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .state-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .state-chip { padding: 7px 14px; border-radius: 100px; border: 1.5px solid #e8e8e8; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: #555; font-family: inherit; }
+    .state-chip:hover { border-color: #999; }
+    .state-chip.active { border-color: transparent; }
+
+    /* 의무 체크리스트 */
+    .duty-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .duty-chip { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 100px; border: 1.5px solid #e8e8e8; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: #555; }
+    .duty-chip:hover { border-color: #999; }
+    .duty-chip.checked { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .duty-chip-check { font-size: 11px; }
+    .duty-add-btn { font-size: 12px; color: #aaa; cursor: pointer; padding: 7px 12px; border: 1.5px dashed #e0e0e0; border-radius: 100px; transition: all 0.15s; background: none; font-family: inherit; }
+    .duty-add-btn:hover { border-color: #999; color: #555; }
+
+    /* 텍스트 필드들 */
+    .daily-input { width: 100%; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; color: #1a1a1a; transition: border-color 0.15s; resize: none; }
+    .daily-input:focus { border-color: #333; }
+
+    /* greyday 토글 */
+    .greyday-toggle { display: flex; align-items: center; gap: 12px; }
+    .toggle-track { width: 44px; height: 24px; border-radius: 100px; background: #e0e0e0; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-track.on { background: #555; }
+    .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    .toggle-track.on .toggle-thumb { left: 22px; }
+    .greyday-label { font-size: 13px; color: #555; }
+
+    .daily-save-btn { width: 100%; padding: 13px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; margin-top: 4px; }
+    .daily-save-btn:hover { opacity: 0.85; }
+
+    /* 데일리 테이블 */
+    .daily-table-section { }
+    .daily-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .daily-table-title { font-size: 15px; font-weight: 700; }
+    .daily-table-clear { font-size: 12px; color: #bbb; cursor: pointer; background: none; border: none; font-family: inherit; }
+    .daily-table-clear:hover { color: #cc3333; }
+
+    .daily-table-wrap { background: #fff; border-radius: 16px; overflow: hidden; overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    thead th { padding: 12px 16px; font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; background: #f9f9f7; text-align: left; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #f5f5f0; transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafaf8; }
+    tbody td { padding: 12px 16px; font-size: 13px; color: #333; vertical-align: top; }
+
+    .td-date { font-weight: 600; white-space: nowrap; color: #888; font-size: 12px; }
+    .td-states { display: flex; flex-wrap: wrap; gap: 4px; }
+    .td-state-tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 600; white-space: nowrap; }
+    .td-duties { display: flex; flex-wrap: wrap; gap: 4px; }
+    .td-duty-tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; background: #f0f0f0; color: #555; white-space: nowrap; }
+    .td-greyday { text-align: center; }
+    .td-greyday-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; display: inline-block; }
+    .td-notes { color: #888; font-size: 12px; max-width: 200px; }
+    .td-emotion { color: #555; }
+    .td-eating { max-width: 180px; color: #555; font-size: 12px; }
+
+    .daily-empty { padding: 48px; text-align: center; font-size: 13px; color: #bbb; }
+
+    .edit-row-btn { font-size: 11px; color: #bbb; cursor: pointer; background: none; border: none; font-family: inherit; opacity: 0; }
+    tbody tr:hover .edit-row-btn { opacity: 1; }
+    .edit-row-btn:hover { color: #555; }
+
+    /* ── 모달 공통 ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; transform: translateY(16px); transition: transform 0.25s; }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: #888; margin-bottom: 28px; line-height: 1.6; }
+    .new-track-input { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 12px; padding: 14px 16px; font-size: 16px; font-weight: 600; font-family: inherit; outline: none; color: #1a1a1a; transition: border-color 0.15s; margin-bottom: 16px; }
+    .new-track-input:focus { border-color: #1a1a1a; }
+    .preset-label { font-size: 12px; color: #aaa; margin-bottom: 10px; }
+    .preset-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .preset-chip { padding: 6px 14px; border: 1.5px solid #e0e0e0; border-radius: 100px; font-size: 12px; cursor: pointer; color: #555; transition: all 0.15s; background: #fff; }
+    .preset-chip:hover { border-color: #333; color: #333; }
+    .interview-step { display: none; }
+    .interview-step.active { display: block; }
+    .interview-q { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; line-height: 1.5; }
+    .interview-hint { font-size: 12px; color: #aaa; margin-bottom: 14px; line-height: 1.5; }
+    .interview-input { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; resize: none; outline: none; color: #1a1a1a; transition: border-color 0.15s; margin-bottom: 20px; }
+    .interview-input:focus { border-color: #333; }
+    .progress-dots { display: flex; gap: 6px; margin-bottom: 24px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #e0e0e0; transition: background 0.2s; }
+    .dot.active { background: #1a1a1a; }
+    .modal-btn-row { display: flex; gap: 10px; }
+    .btn-primary { flex: 1; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { padding: 12px 20px; background: #f5f5f0; color: #555; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+    .btn-secondary:hover { background: #ebebeb; }
+    .goal-suggestion { background: #f5f5f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .suggestion-label { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 8px; }
+    .suggestion-text { font-size: 15px; font-weight: 600; color: #1a1a1a; line-height: 1.6; margin-bottom: 10px; }
+    .suggestion-edit { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; resize: none; outline: none; color: #1a1a1a; transition: border-color 0.15s; }
+    .suggestion-edit:focus { border-color: #333; }
+    .guide-section { margin-bottom: 24px; }
+    .guide-section-title { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+    .example-box { background: #f5f5f0; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .example-goal { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+    .example-steps { list-style: none; }
+    .example-step { display: flex; gap: 8px; padding: 4px 0; font-size: 12px; color: #555; line-height: 1.5; }
+    .step-arrow { color: #bbb; flex-shrink: 0; }
+    .pump-highlight { background: #fff3cd; border-radius: 6px; padding: 2px 6px; font-weight: 600; color: #b07c00; }
+    .rule-list { list-style: none; }
+    .rule-item { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; color: #444; border-bottom: 1px solid #f5f5f0; line-height: 1.5; }
+    .rule-item:last-child { border-bottom: none; }
+    .rule-icon { flex-shrink: 0; }
+    .my-goal-box { background: #f5f5f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .my-goal-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .my-goal-text { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .step-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .step-input { flex: 1; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .step-input:focus { border-color: #333; }
+    .step-add-btn { padding: 8px 14px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .guide-steps-preview { list-style: none; margin-bottom: 16px; }
+    .guide-step-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: #444; border-bottom: 1px solid #f5f5f0; }
+    .guide-step-item:last-child { border-bottom: none; }
+    .guide-step-num { font-size: 11px; color: #bbb; min-width: 18px; }
+    .guide-step-del { font-size: 11px; color: #ddd; cursor: pointer; margin-left: auto; }
+    .guide-step-del:hover { color: #cc3333; }
+    .pump-select-hint { font-size: 12px; color: #888; margin-bottom: 12px; line-height: 1.5; }
+
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a1a; color: #fff; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 999; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .mb-40 { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>내 트랙 OS</h1>
+    <p class="subtitle">병렬로 굴리되, 하나씩 마중물부터</p>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn header-btn-secondary" onclick="openNewTrackModal()">+ 트랙 추가</button>
+  </div>
+</header>
+
+<!-- 탭 -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('kanban', this)">트랙 칸반</button>
+  <button class="tab-btn" onclick="switchTab('daily', this)">데일리 체크</button>
+</div>
+
+<!-- ── 칸반 탭 ── -->
+<div class="tab-panel active" id="tab-kanban">
+  <div class="condition-bar">
+    <div class="condition-card">
+      <div class="condition-top">
+        <span class="condition-label">오늘 컨디션</span>
+        <div class="condition-selected" id="conditionSelected" style="display:none">
+          <span class="condition-selected-badge" id="conditionBadge"></span>
+          <div class="condition-energy-bar"><div class="condition-energy-fill" id="conditionEnergyFill"></div></div>
+          <span style="font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;" onclick="clearCondition()">변경</span>
+        </div>
+      </div>
+      <div class="condition-strategy" id="conditionStrategy" style="display:none"></div>
+      <div class="condition-grid" id="conditionGrid"></div>
+    </div>
+  </div>
+
+  <div class="kanban-wrapper">
+    <div class="tracks" id="tracksContainer"></div>
+  </div>
+
+  <div class="activity-log mb-40">
+    <div class="log-header">
+      <span class="log-title">마중물 로그</span>
+      <button class="log-clear-btn" onclick="clearActivityLog()">전체 삭제</button>
+    </div>
+    <div id="activityLogContainer"></div>
+  </div>
+</div>
+
+<!-- ── 데일리 체크 탭 ── -->
+<div class="tab-panel" id="tab-daily">
+  <div class="daily-panel">
+
+    <!-- 오늘 체크인 카드 -->
+    <div class="daily-today-card">
+      <div class="daily-today-header">
+        <span class="daily-today-title">오늘 체크</span>
+        <span class="daily-today-date" id="dailyTodayDate"></span>
+      </div>
+
+      <!-- 상태 멀티셀렉트 -->
+      <div class="daily-field">
+        <div class="daily-field-label">오늘 상태 (복수 선택 가능)</div>
+        <div class="state-chips" id="todayStateChips"></div>
+      </div>
+
+      <!-- 식습관 -->
+      <div class="daily-field">
+        <div class="daily-field-label">식습관</div>
+        <input class="daily-input" id="todayEating" type="text" placeholder="오늘 뭘 먹었는지, 특이사항 등" />
+      </div>
+
+      <!-- 하는 의무 -->
+      <div class="daily-field">
+        <div class="daily-field-label">오늘 한 의무</div>
+        <div class="duty-chips" id="todayDutyChips"></div>
+      </div>
+
+      <!-- greyday -->
+      <div class="daily-field">
+        <div class="daily-field-label">Grey Day</div>
+        <div class="greyday-toggle">
+          <div class="toggle-track" id="greydayToggle" onclick="toggleGreyday()">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="greyday-label" id="greydayLabel">아님</span>
+        </div>
+      </div>
+
+      <!-- 비고 -->
+      <div class="daily-field">
+        <div class="daily-field-label">비고</div>
+        <input class="daily-input" id="todayNotes" type="text" placeholder="특이사항, 메모" />
+      </div>
+
+      <!-- 감정 -->
+      <div class="daily-field">
+        <div class="daily-field-label">감정</div>
+        <input class="daily-input" id="todayEmotion" type="text" placeholder="오늘의 감정 한 줄" />
+      </div>
+
+      <button class="daily-save-btn" onclick="saveDailyCheck()">오늘 저장</button>
+    </div>
+
+    <!-- 데일리 로그 테이블 -->
+    <div class="daily-table-section">
+      <div class="daily-table-header">
+        <span class="daily-table-title">기록</span>
+        <button class="daily-table-clear" onclick="clearDailyLog()">전체 삭제</button>
+      </div>
+      <div class="daily-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>상태</th>
+              <th>식습관</th>
+              <th>한 의무</th>
+              <th>Grey</th>
+              <th>비고</th>
+              <th>감정</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="dailyTableBody"></tbody>
+        </table>
+        <div class="daily-empty" id="dailyEmpty" style="display:none">아직 기록이 없어요. 오늘 체크부터 시작해봐요.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 새 트랙 모달 -->
+<div class="modal-overlay" id="newTrackModal">
+  <div class="modal">
+    <div class="modal-title">새 트랙 만들기</div>
+    <p class="modal-sub">어떤 영역을 굴리고 싶어요?</p>
+    <input class="new-track-input" id="newTrackName" type="text" placeholder="트랙 이름" maxlength="20"
+      onkeydown="if(event.key==='Enter')confirmNewTrack()" />
+    <div class="preset-label">추천 트랙</div>
+    <div class="preset-chips">
+      <button class="preset-chip" onclick="pickPreset('사이드 프로젝트')">사이드 프로젝트</button>
+      <button class="preset-chip" onclick="pickPreset('건강 / 운동')">건강 / 운동</button>
+      <button class="preset-chip" onclick="pickPreset('학습')">학습</button>
+      <button class="preset-chip" onclick="pickPreset('인간관계')">인간관계</button>
+      <button class="preset-chip" onclick="pickPreset('재정')">재정</button>
+      <button class="preset-chip" onclick="pickPreset('창작')">창작</button>
+      <button class="preset-chip" onclick="pickPreset('여행')">여행</button>
+      <button class="preset-chip" onclick="pickPreset('독서')">독서</button>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="closeNewTrackModal()">취소</button>
+      <button class="btn-primary" onclick="confirmNewTrack()">만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 목표 발견 모달 -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal">
+    <div class="modal-title">목표 찾기</div>
+    <p class="modal-sub" id="goalModalSub"></p>
+    <div class="progress-dots" id="progressDots"></div>
+    <div class="interview-step" id="istep-0">
+      <div class="interview-q">6개월 뒤, 이 트랙에서 뭐가 달라지면 좋겠어요?</div>
+      <div class="interview-hint">잘 모르겠으면 "지금이 싫다"는 것부터 써도 돼요.</div>
+      <textarea class="interview-input" id="iAnswer-0" rows="3" placeholder="예: 취준이 정리되어 있으면 좋겠다..."></textarea>
+    </div>
+    <div class="interview-step" id="istep-1">
+      <div class="interview-q">지금 이 트랙에서 뭐가 제일 불편하거나 아쉬워요?</div>
+      <div class="interview-hint">뭔가 막히는 느낌, 안 굴러가는 느낌 — 그게 뭔지요.</div>
+      <textarea class="interview-input" id="iAnswer-1" rows="3" placeholder="예: 뭘 준비해야 할지 모르겠다..."></textarea>
+    </div>
+    <div class="interview-step" id="istep-2">
+      <div class="interview-q">이 트랙에서 딱 하나만 이루면 된다면, 그게 뭘까요?</div>
+      <div class="interview-hint">거창하지 않아도 돼요. "이것만 되면 됐다" 싶은 거요.</div>
+      <textarea class="interview-input" id="iAnswer-2" rows="3" placeholder="예: 포트폴리오 하나 완성..."></textarea>
+    </div>
+    <div class="interview-step" id="istep-3">
+      <div class="interview-q">이런 목표는 어때요?</div>
+      <div class="interview-hint">답변을 바탕으로 정리했어요. 직접 수정해도 돼요.</div>
+      <div class="goal-suggestion">
+        <div class="suggestion-label">제안 목표</div>
+        <div class="suggestion-text" id="suggestionText"></div>
+      </div>
+      <textarea class="suggestion-edit" id="finalGoalInput" rows="3" placeholder="마음에 안 들면 직접 써요"></textarea>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="closeGoalModal()">닫기</button>
+      <button class="btn-primary" id="goalNextBtn" onclick="goalNext()">다음</button>
+    </div>
+  </div>
+</div>
+
+<!-- 단계 쪼개기 모달 -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <div class="modal-title">목표 쪼개기</div>
+    <p class="modal-sub">목표를 7~15개 작은 단계로 쪼개고,<br/>첫 단계(마중물)를 말도 안 되게 작게 만들어요.</p>
+    <div class="guide-section">
+      <div class="guide-section-title">예시로 보는 쪼개기</div>
+      <div class="example-box">
+        <div class="example-goal">목표: 아침 6시에 일어나기</div>
+        <ul class="example-steps">
+          <li class="example-step"><span class="step-arrow">→</span><span><span class="pump-highlight">마중물: 이불 속에서 오른발 복숭아뼈만 꺼내기</span></span></li>
+          <li class="example-step"><span class="step-arrow">→</span><span>발 하나를 바닥에 내려놓기</span></li>
+          <li class="example-step"><span class="step-arrow">→</span><span>일어나 앉기</span></li>
+          <li class="example-step"><span class="step-arrow">→</span><span>불 켜기</span></li>
+          <li class="example-step"><span class="step-arrow">→</span><span>물 한 잔 마시기</span></li>
+        </ul>
+      </div>
+      <ul class="rule-list">
+        <li class="rule-item"><span class="rule-icon">💡</span><span>마중물은 30초 안에, 실패할 수 없을 만큼 작게</span></li>
+        <li class="rule-item"><span class="rule-icon">💡</span><span>목표가 아니라 "오늘 할 행동"으로 쓰기</span></li>
+        <li class="rule-item"><span class="rule-icon">💡</span><span>컨디션이 별로인 날은 마중물 하나만 해도 성공</span></li>
+      </ul>
+    </div>
+    <div class="guide-section">
+      <div class="guide-section-title">내 목표 쪼개기</div>
+      <div class="my-goal-box">
+        <div class="my-goal-label">목표</div>
+        <div class="my-goal-text" id="guideGoalText">—</div>
+      </div>
+      <ul class="guide-steps-preview" id="guideStepsList"></ul>
+      <div class="step-input-row">
+        <input class="step-input" id="newStepInput" type="text"
+          placeholder="단계 추가 (구체적이고 작게)"
+          onkeydown="if(event.key==='Enter')addGuideStep()" />
+        <button class="step-add-btn" onclick="addGuideStep()">추가</button>
+      </div>
+      <div class="pump-select-hint" id="pumpSelectHint"></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="closeGuideModal()">닫기</button>
+      <button class="btn-primary" onclick="saveGuideSteps()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 컨디션 정의 ──
+const CONDITIONS = [
+  { id:'great',   emoji:'🔥', name:'에너지 넘침', time:'4시간+',     energy:100, color:'#ff6b35', bg:'#fff3ee', strategy:'가장 중요하거나 오래 미뤄온 트랙부터 집중해요.', recommend:'important' },
+  { id:'good',    emoji:'😊', name:'좋음',        time:'2~3시간',    energy:75,  color:'#1a9e5c', bg:'#e6f9f0', strategy:'평소대로 하면 돼요. 중간 난이도 작업을 꾸준히 진행하기 좋아요.', recommend:'normal' },
+  { id:'meh',     emoji:'😐', name:'보통',        time:'1~2시간',    energy:55,  color:'#b07c00', bg:'#fff8e1', strategy:'쉬운 것부터 시작해서 리듬을 타요. 마중물 하나로 흐름을 만들어보세요.', recommend:'easy' },
+  { id:'tired',   emoji:'😓', name:'지침',        time:'1시간 미만', energy:35,  color:'#888',    bg:'#f5f5f5', strategy:'마중물 하나만 해도 충분해요. 흐름을 끊지 않는 것만으로도 성공이에요.', recommend:'easy' },
+  { id:'sick',    emoji:'🤒', name:'아픔',        time:'30분 미만',  energy:15,  color:'#cc3333', bg:'#ffeaea', strategy:'몸이 먼저예요. 30분 안에 끝낼 수 있는 것만, 또는 오늘은 쉬어도 됩니다.', recommend:'skip' },
+  { id:'anxious', emoji:'😰', name:'불안함',      time:'1시간',      energy:40,  color:'#7c3aed', bg:'#f3e8ff', strategy:'완료되는 느낌이 도움돼요. 10분 안에 끝낼 수 있는 명확한 행동부터 시작해요.', recommend:'easy' },
+  { id:'sad',     emoji:'😔', name:'우울함',      time:'30분',       energy:20,  color:'#2563eb', bg:'#eff6ff', strategy:'아주 작은 행동 하나가 기분 전환이 될 수 있어요. 억지로 하지 않아도 돼요.', recommend:'easy' },
+  { id:'burnout', emoji:'😶', name:'번아웃',      time:'쉬는 날',    energy:5,   color:'#555',    bg:'#f0f0f0', strategy:'오늘은 쉬어도 돼요. 억지로 하면 더 오래 걸려요.', recommend:'skip' },
+];
+const CONDITION_MAP = Object.fromEntries(CONDITIONS.map(c => [c.id, c]));
+
+// ── 데일리 상태 태그 정의 ──
+const DAILY_STATES = [
+  { id:'sick',     label:'아플때',           color:'#cc3333', bg:'#ffeaea' },
+  { id:'exp_busy', label:'예상한 바쁨',      color:'#b07c00', bg:'#fff8e1' },
+  { id:'unexp_busy',label:'예상 못한 바쁨',  color:'#ff6b35', bg:'#fff3ee' },
+  { id:'sad',      label:'우울할때',         color:'#2563eb', bg:'#eff6ff' },
+  { id:'happy',    label:'행복할때',         color:'#1a9e5c', bg:'#e6f9f0' },
+  { id:'anxious',  label:'불안할때',         color:'#7c3aed', bg:'#f3e8ff' },
+  { id:'tired',    label:'많이 지침',        color:'#888',    bg:'#f5f5f5' },
+  { id:'motivated',label:'동기부여됨',       color:'#0891b2', bg:'#ecfeff' },
+];
+const DAILY_STATE_MAP = Object.fromEntries(DAILY_STATES.map(s => [s.id, s]));
+
+// ── 상태 ──
+const PRESETS = ['업무 / 커리어', '셀피쉬클럽', '취준'];
+function makeTrack(name) {
+  return { id:'track_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, goal:'', steps:[], pumpAction:'', lastDone:null };
+}
+
+let state = loadState();
+let goalModalTrackId = null, goalModalStep = 0;
+let guideModalTrackId = null, guideStepsTemp = [];
+let openMenuId = null, editingNameId = null;
+
+// 오늘 데일리 체크 임시상태
+let todayStates = new Set();
+let todayDuties = new Set();
+let todayGreyday = false;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('trackOS_v5');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {
+    tracks: PRESETS.map(name => makeTrack(name)),
+    condition: null, conditionDate: null,
+    activityLog: [],
+    dailyLog: [],
+    duties: ['씻기', '먹기', '운동', '집구하기', '청소'],
+  };
+}
+
+function saveState() { localStorage.setItem('trackOS_v5', JSON.stringify(state)); }
+
+// ── 탭 ──
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'daily') renderDailyTab();
+}
+
+// ── 컨디션 ──
+function setCondition(id) { state.condition=id; state.conditionDate=new Date().toISOString().slice(0,10); saveState(); renderCondition(); renderKanban(); }
+function clearCondition() { state.condition=null; saveState(); renderCondition(); renderKanban(); }
+
+function renderCondition() {
+  const grid = document.getElementById('conditionGrid');
+  const selected = document.getElementById('conditionSelected');
+  const badge = document.getElementById('conditionBadge');
+  const fill = document.getElementById('conditionEnergyFill');
+  const strategy = document.getElementById('conditionStrategy');
+  grid.innerHTML = CONDITIONS.map(c => `
+    <button class="condition-btn ${state.condition===c.id?'active':''}"
+      style="${state.condition===c.id?`background:${c.color};border-color:${c.color};`:''}"
+      onclick="setCondition('${c.id}')">
+      <span class="cond-emoji">${c.emoji}</span>
+      <span class="cond-name">${c.name}</span>
+      <span class="cond-time">${c.time}</span>
+    </button>`).join('');
+  if (state.condition) {
+    const c = CONDITION_MAP[state.condition];
+    grid.style.display = 'none'; selected.style.display = 'flex';
+    badge.textContent = `${c.emoji} ${c.name} · ${c.time}`;
+    badge.style.background = c.bg; badge.style.color = c.color;
+    fill.style.width = c.energy+'%'; fill.style.background = c.color;
+    strategy.textContent = c.strategy; strategy.style.display = 'block';
+  } else {
+    grid.style.display = 'grid'; selected.style.display = 'none'; strategy.style.display = 'none';
+  }
+}
+
+// ── 칸반 ──
+function daysSince(iso) { if(!iso) return null; return Math.floor((Date.now()-new Date(iso).getTime())/86400000); }
+function getStatus(days) {
+  if(days===null) return {badge:'badge-red', label:'아직 시작 안 함'};
+  if(days===0)    return {badge:'badge-green', label:'오늘 건드림'};
+  if(days<=3)     return {badge:'badge-green', label:`${days}일 전`};
+  if(days<=7)     return {badge:'badge-yellow',label:`${days}일 전`};
+  return          {badge:'badge-red', label:`${days}일 전`};
+}
+function getRecommended(tracks, condId) {
+  if(!condId||tracks.length===0) return null;
+  const c = CONDITION_MAP[condId];
+  if(!c||c.recommend==='skip') return null;
+  if(c.recommend==='important') return tracks.reduce((a,b)=>(daysSince(a.lastDone)??999)>=(daysSince(b.lastDone)??999)?a:b).id;
+  return tracks.reduce((a,b)=>(a.pumpAction||'').length<=(b.pumpAction||'').length?a:b).id;
+}
+
+function updatePump(trackId, value) { const t=state.tracks.find(t=>t.id===trackId); if(t){t.pumpAction=value;saveState();} }
+
+function markDone(trackId) {
+  const t = state.tracks.find(t=>t.id===trackId);
+  if(!t) return;
+  t.lastDone = new Date().toISOString();
+  const cond = state.condition ? CONDITION_MAP[state.condition] : null;
+  if(!state.activityLog) state.activityLog=[];
+  state.activityLog.unshift({
+    id:Date.now(), timestamp:new Date().toISOString(),
+    trackName:t.name, action:t.pumpAction||'마중물',
+    conditionId:state.condition,
+    conditionEmoji:cond?cond.emoji:'—', conditionName:cond?cond.name:'—',
+    conditionColor:cond?cond.color:'#888', conditionBg:cond?cond.bg:'#f5f5f5',
+  });
+  if(state.activityLog.length>200) state.activityLog=state.activityLog.slice(0,200);
+  saveState(); showToast(`${t.name} — 마중물 완료!`); renderKanban();
+}
+
+function toggleStep(trackId, idx) { const t=state.tracks.find(t=>t.id===trackId); if(t&&t.steps[idx]){t.steps[idx].done=!t.steps[idx].done;saveState();renderKanban();} }
+function toggleStepsUI(trackId) { const el=document.getElementById(`steps-${trackId}`); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
+function startEditName(trackId) { editingNameId=trackId; closeMenu(); renderKanban(); setTimeout(()=>{const el=document.getElementById(`name-input-${trackId}`);if(el){el.focus();el.select();}},50); }
+function finishEditName(trackId,value) { const t=state.tracks.find(t=>t.id===trackId); if(t&&value.trim()) t.name=value.trim(); editingNameId=null; saveState(); renderKanban(); }
+function deleteTrack(trackId) { if(!confirm('이 트랙을 삭제할까요?')) return; state.tracks=state.tracks.filter(t=>t.id!==trackId); saveState(); closeMenu(); renderKanban(); }
+function toggleMenu(trackId,e) { e.stopPropagation(); openMenuId=openMenuId===trackId?null:trackId; renderKanban(); }
+function closeMenu() { openMenuId=null; }
+
+function clearActivityLog() { if(!confirm('마중물 로그를 전체 삭제할까요?')) return; state.activityLog=[]; saveState(); renderActivityLog(); }
+
+function renderActivityLog() {
+  const container = document.getElementById('activityLogContainer');
+  const log = state.activityLog||[];
+  if(log.length===0) { container.innerHTML='<div class="log-empty">아직 기록이 없어요.<br/>마중물을 완료하면 여기에 기록돼요.</div>'; return; }
+  const grouped={};
+  log.forEach(e=>{ const d=e.timestamp.slice(0,10); if(!grouped[d]) grouped[d]=[]; grouped[d].push(e); });
+  const today=new Date().toISOString().slice(0,10);
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  container.innerHTML=Object.entries(grouped).map(([day,entries])=>`
+    <div class="log-day-group">
+      <div class="log-day-label">${day===today?'오늘':day===yesterday?'어제':day}</div>
+      <div class="log-entries">
+        ${entries.map(e=>{
+          const time=new Date(e.timestamp).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+          return `<div class="log-entry">
+            <div class="log-cond-dot" style="background:${e.conditionBg||'#f5f5f5'}">${e.conditionEmoji||'—'}</div>
+            <div class="log-body">
+              <div class="log-track-name">${e.trackName}</div>
+              <div class="log-action">${e.action}</div>
+            </div>
+            <span class="log-cond-tag" style="background:${e.conditionBg||'#f5f5f5'};color:${e.conditionColor||'#888'}">${e.conditionName||'—'}</span>
+            <span class="log-time">${time}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderKanban() {
+  renderCondition();
+  const recommended = getRecommended(state.tracks, state.condition);
+  const container = document.getElementById('tracksContainer');
+  container.innerHTML = state.tracks.map(track => {
+    const days=daysSince(track.lastDone), status=getStatus(days);
+    const isRec=recommended===track.id, isEdit=editingNameId===track.id, isMenu=openMenuId===track.id;
+    const nameHtml = isEdit
+      ? `<input class="track-name-input" id="name-input-${track.id}" value="${track.name}"
+           onblur="finishEditName('${track.id}',this.value)"
+           onkeydown="if(event.key==='Enter')finishEditName('${track.id}',this.value);if(event.key==='Escape'){editingNameId=null;renderKanban();}" />`
+      : `<span class="track-name" ondblclick="startEditName('${track.id}')">${track.name}</span>`;
+    const menuHtml = isMenu ? `
+      <div class="track-menu">
+        <div class="track-menu-item" onclick="startEditName('${track.id}')">이름 수정</div>
+        <div class="track-menu-item danger" onclick="deleteTrack('${track.id}')">트랙 삭제</div>
+      </div>` : '';
+    const goalSection = track.goal
+      ? `<div class="section-label">목표</div><div class="goal-text-display" onclick="openGoalModal('${track.id}')">${track.goal}</div>`
+      : `<div class="goal-empty" onclick="openGoalModal('${track.id}')"><span class="goal-empty-text">아직 목표가 없어요</span><button class="goal-find-btn">목표 찾기</button></div>`;
+    const stepsHtml = track.steps.length>0 ? `
+      <div class="steps-toggle" onclick="toggleStepsUI('${track.id}')">
+        <span>▸ 실행 단계 (${track.steps.filter(s=>s.done).length}/${track.steps.length})</span>
+        <span style="font-size:11px;text-decoration:underline;color:#bbb;margin-left:auto"
+          onclick="event.stopPropagation();openGuideModal('${track.id}')">수정</span>
+      </div>
+      <ul class="steps-list" id="steps-${track.id}" style="display:none">
+        ${track.steps.map((s,i)=>`
+          <li class="step-item">
+            <input type="checkbox" class="step-check" ${s.done?'checked':''} onchange="toggleStep('${track.id}',${i})" />
+            <span class="step-text ${s.done?'done':''}">${s.text}</span>
+          </li>`).join('')}
+      </ul>` : `<span class="add-step" onclick="openGuideModal('${track.id}')">+ 목표 쪼개기 &amp; 마중물 설정</span><br/><br/>`;
+    return `
+      <div class="track-card ${isRec?'highlighted':''}">
+        ${isRec?'<span class="recommend-tag">오늘 여기부터</span>':''}
+        <div class="track-header">
+          <div class="track-name-wrap">${nameHtml}</div>
+          <span class="track-badge ${status.badge}">${status.label}</span>
+          <button class="track-menu-btn" onclick="toggleMenu('${track.id}',event)">⋯</button>
+        </div>
+        ${menuHtml}${goalSection}${stepsHtml}
+        <div class="pump-primer">
+          <div class="pump-label">
+            <span>💧 마중물</span>
+            <span class="pump-guide-link" onclick="openGuideModal('${track.id}')">쪼개기 가이드</span>
+          </div>
+          <input class="pump-action-input" type="text" placeholder="30초 안에 할 수 있는 첫 행동"
+            value="${track.pumpAction}"
+            onchange="updatePump('${track.id}',this.value)" onblur="updatePump('${track.id}',this.value)" />
+          <div class="pump-hint">말도 안 되게 작게. 실패할 수 없을 만큼.</div>
+        </div>
+        <button class="do-btn" onclick="markDone('${track.id}')">지금 마중물 했어요</button>
+      </div>`;
+  }).join('') + `
+    <div class="add-track-card" onclick="openNewTrackModal()">
+      <div class="add-track-icon">+</div>
+      <div class="add-track-text">트랙 추가</div>
+    </div>`;
+  renderActivityLog();
+}
+
+// ── 데일리 체크 탭 ──
+function renderDailyTab() {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('dailyTodayDate').textContent = dateStr;
+
+  // 오늘 기존 데이터 있으면 로드
+  const todayKey = today.toISOString().slice(0,10);
+  const existing = (state.dailyLog||[]).find(e=>e.date===todayKey);
+  if(existing) {
+    todayStates = new Set(existing.states||[]);
+    todayDuties = new Set(existing.duties||[]);
+    todayGreyday = existing.greyday||false;
+    document.getElementById('todayEating').value = existing.eating||'';
+    document.getElementById('todayNotes').value = existing.notes||'';
+    document.getElementById('todayEmotion').value = existing.emotion||'';
+  } else {
+    todayStates = new Set(); todayDuties = new Set(); todayGreyday = false;
+    document.getElementById('todayEating').value='';
+    document.getElementById('todayNotes').value='';
+    document.getElementById('todayEmotion').value='';
+  }
+
+  renderDailyStateChips();
+  renderDailyDutyChips();
+  renderGreydayToggle();
+  renderDailyTable();
+}
+
+function renderDailyStateChips() {
+  document.getElementById('todayStateChips').innerHTML = DAILY_STATES.map(s=>`
+    <button class="state-chip ${todayStates.has(s.id)?'active':''}"
+      style="${todayStates.has(s.id)?`background:${s.color};border-color:${s.color};color:#fff`:''}"
+      onclick="toggleTodayState('${s.id}')">${s.label}</button>`).join('');
+}
+
+function toggleTodayState(id) {
+  if(todayStates.has(id)) todayStates.delete(id); else todayStates.add(id);
+  renderDailyStateChips();
+}
+
+function renderDailyDutyChips() {
+  const duties = state.duties||[];
+  document.getElementById('todayDutyChips').innerHTML =
+    duties.map(d=>`
+      <div class="duty-chip ${todayDuties.has(d)?'checked':''}" onclick="toggleTodayDuty('${d}')">
+        <span class="duty-chip-check">${todayDuties.has(d)?'✓':''}</span>
+        ${d}
+      </div>`).join('')
+    + `<button class="duty-add-btn" onclick="addDutyItem()">+ 추가</button>`;
+}
+
+function toggleTodayDuty(d) {
+  if(todayDuties.has(d)) todayDuties.delete(d); else todayDuties.add(d);
+  renderDailyDutyChips();
+}
+
+function addDutyItem() {
+  const name = prompt('의무 항목 이름을 입력하세요:');
+  if(!name||!name.trim()) return;
+  if(!state.duties) state.duties=[];
+  if(!state.duties.includes(name.trim())) { state.duties.push(name.trim()); saveState(); }
+  renderDailyDutyChips();
+}
+
+function toggleGreyday() {
+  todayGreyday = !todayGreyday;
+  renderGreydayToggle();
+}
+
+function renderGreydayToggle() {
+  const toggle = document.getElementById('greydayToggle');
+  const label = document.getElementById('greydayLabel');
+  toggle.classList.toggle('on', todayGreyday);
+  label.textContent = todayGreyday ? 'Grey Day' : '아님';
+}
+
+function saveDailyCheck() {
+  if(!state.dailyLog) state.dailyLog=[];
+  const todayKey = new Date().toISOString().slice(0,10);
+  const entry = {
+    date: todayKey,
+    states: [...todayStates],
+    eating: document.getElementById('todayEating').value.trim(),
+    duties: [...todayDuties],
+    greyday: todayGreyday,
+    notes: document.getElementById('todayNotes').value.trim(),
+    emotion: document.getElementById('todayEmotion').value.trim(),
+  };
+  const idx = state.dailyLog.findIndex(e=>e.date===todayKey);
+  if(idx>=0) state.dailyLog[idx]=entry; else state.dailyLog.unshift(entry);
+  state.dailyLog.sort((a,b)=>b.date.localeCompare(a.date));
+  saveState();
+  renderDailyTable();
+  showToast('오늘 체크가 저장됐어요');
+}
+
+function clearDailyLog() {
+  if(!confirm('데일리 로그를 전체 삭제할까요?')) return;
+  state.dailyLog=[];
+  saveState(); renderDailyTable();
+}
+
+function renderDailyTable() {
+  const log = state.dailyLog||[];
+  const tbody = document.getElementById('dailyTableBody');
+  const empty = document.getElementById('dailyEmpty');
+  if(log.length===0) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  const todayKey=new Date().toISOString().slice(0,10);
+  const yesterdayKey=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  tbody.innerHTML = log.map(e=>{
+    const label = e.date===todayKey?'오늘':e.date===yesterdayKey?'어제':e.date;
+    const statesHtml = (e.states||[]).map(sid=>{
+      const s=DAILY_STATE_MAP[sid];
+      if(!s) return `<span class="td-state-tag" style="background:#f0f0f0;color:#888">${sid}</span>`;
+      return `<span class="td-state-tag" style="background:${s.bg};color:${s.color}">${s.label}</span>`;
+    }).join('');
+    const dutiesHtml = (e.duties||[]).map(d=>`<span class="td-duty-tag">${d}</span>`).join('');
+    return `<tr>
+      <td class="td-date">${label}</td>
+      <td><div class="td-states">${statesHtml||'—'}</div></td>
+      <td class="td-eating">${e.eating||'—'}</td>
+      <td><div class="td-duties">${dutiesHtml||'—'}</div></td>
+      <td class="td-greyday">${e.greyday?'<span class="td-greyday-dot"></span>':'—'}</td>
+      <td class="td-notes">${e.notes||'—'}</td>
+      <td class="td-emotion">${e.emotion||'—'}</td>
+      <td><button class="edit-row-btn" onclick="editDailyRow('${e.date}')">수정</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function editDailyRow(date) {
+  const entry = (state.dailyLog||[]).find(e=>e.date===date);
+  if(!entry) return;
+  todayStates = new Set(entry.states||[]);
+  todayDuties = new Set(entry.duties||[]);
+  todayGreyday = entry.greyday||false;
+  document.getElementById('todayEating').value = entry.eating||'';
+  document.getElementById('todayNotes').value = entry.notes||'';
+  document.getElementById('todayEmotion').value = entry.emotion||'';
+  // 날짜를 해당 날짜로 임시 변경 후 저장
+  const origDate = new Date().toISOString().slice(0,10);
+  renderDailyStateChips(); renderDailyDutyChips(); renderGreydayToggle();
+  // save 버튼이 해당 날짜로 저장되도록
+  document.querySelector('.daily-save-btn').onclick = () => {
+    if(!state.dailyLog) state.dailyLog=[];
+    const updated = {
+      date, states:[...todayStates],
+      eating:document.getElementById('todayEating').value.trim(),
+      duties:[...todayDuties], greyday:todayGreyday,
+      notes:document.getElementById('todayNotes').value.trim(),
+      emotion:document.getElementById('todayEmotion').value.trim(),
+    };
+    const idx=state.dailyLog.findIndex(e=>e.date===date);
+    if(idx>=0) state.dailyLog[idx]=updated;
+    saveState(); renderDailyTable();
+    // 오늘 저장으로 복구
+    document.querySelector('.daily-save-btn').onclick = saveDailyCheck;
+    document.getElementById('dailyTodayDate').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    showToast(`${date} 기록이 수정됐어요`);
+  };
+  document.getElementById('dailyTodayDate').textContent = `${date} 수정 중`;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── 새 트랙 ──
+function openNewTrackModal() { document.getElementById('newTrackName').value=''; document.getElementById('newTrackModal').classList.add('open'); setTimeout(()=>document.getElementById('newTrackName').focus(),100); }
+function closeNewTrackModal() { document.getElementById('newTrackModal').classList.remove('open'); }
+function pickPreset(name) { document.getElementById('newTrackName').value=name; document.getElementById('newTrackName').focus(); }
+function confirmNewTrack() {
+  const name=document.getElementById('newTrackName').value.trim();
+  if(!name){alert('트랙 이름을 입력해주세요');return;}
+  state.tracks.push(makeTrack(name)); saveState(); closeNewTrackModal(); renderKanban();
+  showToast(`"${name}" 트랙이 추가됐어요`);
+}
+
+// ── 목표 발견 ──
+function openGoalModal(trackId) {
+  goalModalTrackId=trackId; goalModalStep=0;
+  const t=state.tracks.find(t=>t.id===trackId);
+  document.getElementById('goalModalSub').textContent=`트랙: ${t.name}`;
+  document.querySelectorAll('.interview-input').forEach(el=>el.value='');
+  document.getElementById('finalGoalInput').value='';
+  renderGoalModal(); document.getElementById('goalModal').classList.add('open');
+}
+function closeGoalModal() { document.getElementById('goalModal').classList.remove('open'); }
+function renderGoalModal() {
+  document.getElementById('progressDots').innerHTML=Array.from({length:4},(_,i)=>`<div class="dot ${i===goalModalStep?'active':''}"></div>`).join('');
+  document.querySelectorAll('.interview-step').forEach((el,i)=>el.classList.toggle('active',i===goalModalStep));
+  document.getElementById('goalNextBtn').textContent=goalModalStep===3?'이 목표로 저장':'다음';
+}
+function goalNext() {
+  if(goalModalStep<3) {
+    if(goalModalStep===2) {
+      const s=document.getElementById('iAnswer-2').value.trim()||document.getElementById('iAnswer-0').value.trim()||document.getElementById('iAnswer-1').value.trim()||'목표를 직접 써주세요';
+      document.getElementById('suggestionText').textContent=s;
+      document.getElementById('finalGoalInput').value=s;
+    }
+    goalModalStep++; renderGoalModal();
+  } else {
+    const g=document.getElementById('finalGoalInput').value.trim();
+    if(!g){alert('목표를 입력해주세요');return;}
+    const t=state.tracks.find(t=>t.id===goalModalTrackId);
+    if(t){t.goal=g;saveState();}
+    closeGoalModal(); renderKanban(); showToast('목표가 저장됐어요');
+  }
+}
+
+// ── 쪼개기 가이드 ──
+function openGuideModal(trackId) {
+  guideModalTrackId=trackId;
+  const t=state.tracks.find(t=>t.id===trackId);
+  guideStepsTemp=[...(t.steps||[])];
+  document.getElementById('guideGoalText').textContent=t.goal||'목표 없음';
+  document.getElementById('newStepInput').value='';
+  renderGuideModal(); document.getElementById('guideModal').classList.add('open');
+}
+function closeGuideModal() { document.getElementById('guideModal').classList.remove('open'); }
+function renderGuideModal() {
+  const list=document.getElementById('guideStepsList');
+  const t=state.tracks.find(t=>t.id===guideModalTrackId);
+  list.innerHTML=guideStepsTemp.length===0?'<li style="font-size:13px;color:#bbb;padding:8px 0;">아직 단계가 없어요.</li>'
+    :guideStepsTemp.map((s,i)=>`<li class="guide-step-item"><span class="guide-step-num">${i+1}</span><span style="flex:1">${s.text}</span><span class="guide-step-del" onclick="removeGuideStep(${i})">✕</span></li>`).join('');
+  document.getElementById('pumpSelectHint').innerHTML=guideStepsTemp.length>0
+    ?`<b>마중물</b>은 첫 번째 단계예요.<br/>현재 마중물: <b>${t?.pumpAction||'(없음)'}</b>`:'';}
+function addGuideStep() { const input=document.getElementById('newStepInput'); const text=input.value.trim(); if(!text)return; guideStepsTemp.push({text,done:false}); input.value=''; renderGuideModal(); }
+function removeGuideStep(idx) { guideStepsTemp.splice(idx,1); renderGuideModal(); }
+function saveGuideSteps() {
+  const t=state.tracks.find(t=>t.id===guideModalTrackId);
+  if(t){t.steps=guideStepsTemp; if(guideStepsTemp.length>0&&!t.pumpAction)t.pumpAction=guideStepsTemp[0].text; saveState();}
+  closeGuideModal(); renderKanban(); showToast('단계가 저장됐어요');
+}
+
+function showToast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
+
+// ── 초기화 ──
+const today=new Date().toISOString().slice(0,10);
+if(state.conditionDate!==today){state.condition=null;state.conditionDate=today;saveState();}
+
+document.addEventListener('click',e=>{
+  if(openMenuId&&!e.target.closest('.track-menu')&&!e.target.closest('.track-menu-btn')){openMenuId=null;renderKanban();}
+});
+
+['goalModal','guideModal','newTrackModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById(id).classList.remove('open');});
+});
+
+renderKanban();
+</script>
+</body>
+</html>
