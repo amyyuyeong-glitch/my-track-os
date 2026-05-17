@@ -173,6 +173,8 @@
     .goal-row-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
     .goal-row-pump { font-size: 12px; color: var(--g2); }
     .goal-badge { font-size: 10px; padding: 3px 8px; border-radius: 100px; font-weight: 700; flex-shrink: 0; }
+    .goal-del-btn { background: none; border: none; font-size: 18px; color: var(--g3); cursor: pointer; padding: 2px 6px; flex-shrink: 0; line-height: 1; border-radius: 6px; }
+    .goal-del-btn:hover { background: #ffe5e5; color: var(--danger); }
     .badge-green { background: var(--green-bg); color: var(--green); }
     .badge-yellow { background: #fff8e1; color: #b07c00; }
     .badge-red { background: var(--red-bg); color: var(--red); }
@@ -423,15 +425,22 @@
 <div class="sheet-overlay" id="goalSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div style="font-size:11px;font-weight:800;color:var(--g2);margin-bottom:6px" id="goalSheetTrack"></div>
-    <div style="font-size:18px;font-weight:800;margin-bottom:16px" id="goalSheetName"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:800;color:var(--g2);margin-bottom:4px" id="goalSheetTrack"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:18px;font-weight:800" id="goalSheetName"></div>
+          <button onclick="renameGoal()" style="background:none;border:none;font-size:15px;cursor:pointer;color:var(--g2);padding:2px 4px">✏️</button>
+        </div>
+      </div>
+      <button onclick="closeSheet('goalSheet')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--g2);padding:4px;line-height:1">×</button>
+    </div>
     <div class="divider"></div>
     <div class="pump-q" id="pumpQ"></div>
     <div class="pump-sub">30초 안에 할 수 있는 것 하나만</div>
     <input class="sheet-input" id="pumpInput" type="text" placeholder="직접 입력..." onkeydown="if(event.key==='Enter')savePump()" />
     <div class="pump-examples" id="pumpExamples"></div>
     <div class="btn-row">
-      <button class="btn-danger" onclick="deleteGoalConfirm()">삭제</button>
       <button class="btn-primary" onclick="savePump()">저장</button>
     </div>
   </div>
@@ -1435,7 +1444,7 @@ function renderTrackTab() {
             <div class="goal-row-pump">${g.pumpAction||'마중물 없음'}</div>
           </div>
           <span class="goal-badge ${badge}">${label}</span>
-          <span style="color:var(--g3);font-size:14px">›</span>
+          <button class="goal-del-btn" onclick="event.stopPropagation();deleteGoalDirect('${g.id}')">×</button>
         </div>`;
       }).join('')}
       <button class="add-goal-btn" onclick="openAddGoal('${tr.id}')">+ 목표 추가</button>
@@ -1502,6 +1511,24 @@ function savePump() {
   g.pumpAction=document.getElementById('pumpInput').value.trim();
   save(); closeSheet('goalSheet'); renderTrackTab(); renderToday();
   toast('저장됐어요 💧');
+}
+
+function renameGoal() {
+  const g=findGoalById(goalSheetId); if(!g) return;
+  const n=prompt('목표 이름 수정:', g.name);
+  if(!n||!n.trim()) return;
+  g.name=n.trim(); save(); renderTrackTab();
+  document.getElementById('goalSheetName').textContent=g.name;
+  document.getElementById('pumpQ').textContent=`지금 "${g.name}"에서 뭘 할 수 있어?`;
+  toast('이름이 수정됐어요');
+}
+
+function deleteGoalDirect(goalId) {
+  const g=findGoalById(goalId); if(!g) return;
+  if(!confirm(`"${g.name}" 목표를 삭제할까요?`)) return;
+  for(const tr of state.tracks){tr.goals=tr.goals.filter(gg=>gg.id!==goalId);}
+  save(); renderTrackTab(); renderToday();
+  toast('삭제됐어요');
 }
 
 function deleteGoalConfirm() {
