@@ -325,6 +325,40 @@
   </button>
 </nav>
 
+<!-- Claude Code 내보내기 시트 -->
+<div class="sheet-overlay" id="claudeExportSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Claude Code로 분류하기</div>
+    <div class="sheet-sub">아래 내용을 복사해서 Claude Code에 붙여넣고<br/><code style="background:var(--g5);padding:2px 6px;border-radius:4px;font-size:12px">/morning-prep</code> 을 실행하세요</div>
+
+    <div style="position:relative;margin-bottom:16px">
+      <textarea id="claudeExportText" readonly
+        style="width:100%;height:200px;border:1.5px solid var(--g4);border-radius:var(--rs);padding:12px 14px;font-size:12px;font-family:monospace;background:var(--g5);color:var(--black);resize:none;outline:none;line-height:1.6"></textarea>
+      <button onclick="copyExport()"
+        style="position:absolute;top:10px;right:10px;padding:5px 12px;background:var(--black);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+        복사
+      </button>
+    </div>
+
+    <div style="background:var(--g5);border-radius:var(--rs);padding:14px;margin-bottom:16px;font-size:12px;color:var(--g2);line-height:1.8">
+      <b style="color:var(--black)">① 위 내용 복사</b><br/>
+      <b style="color:var(--black)">② Claude Code 터미널에서</b> <code style="background:#fff;padding:1px 5px;border-radius:3px">/morning-prep</code> 입력<br/>
+      <b style="color:var(--black)">③ 결과 JSON을 아래에 붙여넣기</b>
+    </div>
+
+    <div style="font-size:11px;font-weight:800;color:var(--g2);margin-bottom:8px">결과 붙여넣기</div>
+    <textarea id="claudeImportText"
+      placeholder='Claude Code가 출력한 JSON을 여기에 붙여넣어요&#10;[{"index":1,"text":"...","goalId":"...","action":"...","scope":"in"}]'
+      style="width:100%;height:120px;border:1.5px solid var(--g4);border-radius:var(--rs);padding:12px 14px;font-size:12px;font-family:monospace;background:var(--white);color:var(--black);resize:none;outline:none;line-height:1.6;margin-bottom:14px"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeSheet('claudeExportSheet')">닫기</button>
+      <button class="btn-primary" onclick="importClaudeResult()">적용하기</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── 시트들 ── -->
 <!-- 새 트랙 -->
 <div class="sheet-overlay" id="addTrackSheet">
@@ -703,7 +737,12 @@ function renderInbox() {
     </div>`;
   }
 
-  html += `<button class="btn-primary" onclick="startClassify()">자동 분류하기</button>`;
+  html += `<div class="btn-row">
+    <button class="btn-secondary" onclick="openClaudeExport()" style="flex:none;padding:14px 16px;display:flex;align-items:center;gap:6px">
+      <span>🤖</span> Claude Code
+    </button>
+    <button class="btn-primary" onclick="startClassify()">자동 분류하기</button>
+  </div>`;
 
   if (classified.length > 0) {
     html += `<div class="divider"></div>
@@ -879,6 +918,66 @@ function confirmReview() {
   state.inboxStep = 'input';
   save(); renderInbox(); renderToday();
   toast(`오늘 목록에 추가됐어요 ✓`);
+}
+
+// ── Claude Code 연동 ──
+function openClaudeExport() {
+  const pending = (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday);
+  if (!pending.length) { toast('분류할 항목이 없어요'); return; }
+
+  const allGoals = state.tracks.flatMap(tr=>
+    tr.goals.map(g=>({goalId:g.id, name:g.name, track:tr.name}))
+  );
+
+  const goalsJson = JSON.stringify(allGoals, null, 2);
+  const tasksList = pending.map((t,i)=>`${i+1}. ${t.text}`).join('\n');
+
+  const exportText = `=== 내 목표 ===
+${goalsJson}
+
+=== 오늘 할 일 ===
+${tasksList}`;
+
+  document.getElementById('claudeExportText').value = exportText;
+  document.getElementById('claudeImportText').value = '';
+  openSheet('claudeExportSheet');
+}
+
+function copyExport() {
+  const text = document.getElementById('claudeExportText').value;
+  navigator.clipboard.writeText(text).then(()=>toast('복사됐어요 ✓'));
+}
+
+function importClaudeResult() {
+  const raw = document.getElementById('claudeImportText').value.trim();
+  if (!raw) { toast('결과를 붙여넣어 주세요'); return; }
+
+  let results;
+  try {
+    const match = raw.match(/\[[\s\S]*\]/);
+    results = JSON.parse(match ? match[0] : raw);
+  } catch(e) {
+    toast('JSON 형식이 올바르지 않아요'); return;
+  }
+
+  const pending = (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday);
+
+  results.forEach(r => {
+    const item = pending[r.index - 1];
+    if (!item) return;
+    if (r.scope === 'out') { item.status='out'; item.isToday=false; }
+    else if (r.scope === 'later') { item.status='later'; item.isToday=false; }
+    else {
+      item.goalId = r.goalId || null;
+      item.action = r.action || item.text;
+      item.status = 'classified';
+    }
+  });
+
+  state.inboxStep = 'input';
+  save(); closeSheet('claudeExportSheet'); renderInbox(); renderToday();
+  const done = results.filter(r=>r.scope==='in'||!r.scope).length;
+  toast(`${done}개 분류 완료 ✓`);
 }
 
 function updateBadge() {
