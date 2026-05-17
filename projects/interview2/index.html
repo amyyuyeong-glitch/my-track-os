@@ -1074,6 +1074,7 @@ function renderToday() {
       <div class="exec-btns">
         <button class="exec-btn exec-btn-done ${isDone?'active':''}" onclick="markExecDone('${item.id}')" title="완료">✓</button>
         <button class="exec-btn exec-btn-fail ${isFailed?'active':''}" onclick="markExecFail('${item.id}')" title="못함">✗</button>
+        <button class="exec-btn" onclick="deleteExecItem('${item.id}')" title="삭제" style="background:var(--g5);color:var(--g3);font-size:14px">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -1096,6 +1097,11 @@ function markExecDone(itemId) {
   if (!item) return;
   if (item.doneAt) { item.doneAt=null; }
   else { item.doneAt=new Date().toISOString(); item.failedAt=null; logActivity(item); }
+  save(); renderToday(); updateBadge();
+}
+
+function deleteExecItem(itemId) {
+  state.inbox = (state.inbox||[]).filter(i=>i.id!==itemId);
   save(); renderToday(); updateBadge();
 }
 
