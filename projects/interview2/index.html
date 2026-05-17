@@ -412,7 +412,7 @@
 <div class="sheet-overlay" id="triageSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">트리아지</div>
+    <div class="sheet-title">분류하기</div>
     <div class="triage-item-text" id="triageItemText"></div>
     <div class="triage-section-label">어느 목표에 연결할까요?</div>
     <div class="triage-goal-list" id="triageGoalList"></div>
@@ -816,7 +816,7 @@ function renderInbox() {
             <div class="inbox-item-text">${item.text}</div>
             <div class="inbox-item-time">${time}</div>
           </div>
-          <button class="triage-btn" onclick="openTriage('${item.id}')">트리아지 →</button>
+          <button class="triage-btn" onclick="openTriage('${item.id}')">분류하기 →</button>
         </div>`;
       }).join('')}`;
   }
