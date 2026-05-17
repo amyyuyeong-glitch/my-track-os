@@ -274,8 +274,6 @@
       display: flex; align-items: center; justify-content: space-between;
     }
 
-    .pump-guide-link { font-size: 11px; color: var(--gray2); cursor: pointer; text-decoration: underline; }
-    .pump-guide-link:hover { color: #555; }
 
     .pump-action-input {
       width: 100%; border: none; border-bottom: 1.5px solid var(--gray3);
@@ -303,35 +301,6 @@
       font-weight: 600;
     }
 
-    .steps-toggle {
-      font-size: 12px; color: var(--gray2); cursor: pointer;
-      margin-bottom: 8px; user-select: none;
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 0; min-height: 36px;
-    }
-
-    .steps-list { list-style: none; margin-bottom: 14px; }
-
-    .step-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 8px 0; border-bottom: 1px solid var(--gray4);
-      font-size: 13px; color: #555;
-    }
-
-    .step-item:last-child { border-bottom: none; }
-
-    .step-check {
-      width: 18px; height: 18px; accent-color: var(--black);
-      cursor: pointer; flex-shrink: 0; margin-top: 1px;
-    }
-
-    .step-text { flex: 1; line-height: 1.5; }
-    .step-text.done { text-decoration: line-through; color: var(--gray2); }
-
-    .add-step {
-      font-size: 12px; color: var(--gray2); cursor: pointer;
-      padding: 6px 0; display: inline-block; margin-bottom: 14px;
-    }
 
     /* FAB - 트랙 추가 (모바일) */
     .fab {
@@ -725,34 +694,10 @@
     .suggestion-edit { width: 100%; border: 1.5px solid #ebebeb; border-radius: var(--radius-xs); padding: 10px 12px; font-size: 14px; font-family: inherit; resize: none; outline: none; color: var(--black); }
     .suggestion-edit:focus { border-color: var(--black); }
 
-    .guide-section { margin-bottom: 24px; }
-    .guide-section-title { font-size: 12px; font-weight: 800; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray4); }
-    .example-box { background: var(--bg); border-radius: var(--radius-xs); padding: 14px; margin-bottom: 12px; }
-    .example-goal { font-size: 12px; font-weight: 700; color: var(--black); margin-bottom: 10px; }
-    .example-steps { list-style: none; }
-    .example-step { display: flex; gap: 8px; padding: 4px 0; font-size: 12px; color: #555; line-height: 1.5; }
-    .step-arrow { color: var(--gray2); flex-shrink: 0; }
-    .pump-highlight { background: #fff3cd; border-radius: 5px; padding: 1px 6px; font-weight: 700; color: #b07c00; }
-    .rule-list { list-style: none; }
-    .rule-item { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; color: #444; border-bottom: 1px solid var(--bg); line-height: 1.5; }
-    .rule-item:last-child { border-bottom: none; }
-
-    .my-goal-box { background: var(--bg); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px; }
-    .my-goal-label { font-size: 10px; color: var(--gray1); margin-bottom: 4px; font-weight: 700; }
-    .my-goal-text { font-size: 14px; font-weight: 700; color: var(--black); line-height: 1.5; }
-
-    .step-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
-    .step-input { flex: 1; border: 1.5px solid #ebebeb; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: inherit; outline: none; min-height: 44px; }
-    .step-input:focus { border-color: var(--black); }
-    .step-add-btn { padding: 10px 14px; background: var(--black); color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 700; white-space: nowrap; }
-
-    .guide-steps-preview { list-style: none; margin-bottom: 14px; }
-    .guide-step-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 13px; color: #444; border-bottom: 1px solid var(--bg); min-height: 40px; }
-    .guide-step-item:last-child { border-bottom: none; }
-    .guide-step-num { font-size: 11px; color: var(--gray2); min-width: 18px; }
-    .guide-step-del { font-size: 14px; color: var(--gray3); cursor: pointer; margin-left: auto; padding: 4px 8px; min-width: 32px; text-align: center; }
-    .guide-step-del:hover { color: #cc3333; }
-    .pump-select-hint { font-size: 12px; color: var(--gray1); margin-bottom: 12px; line-height: 1.5; }
+    .pump-examples { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+    .pump-ex-chip { font-size:11px; padding:5px 10px; background:#fff; border:1px solid #e0e0e0; border-radius:100px; cursor:pointer; color:#555; transition:all 0.15s; }
+    .pump-ex-chip:hover { border-color:#999; color:#333; background:#f5f5f0; }
+    .pump-hint-text { font-size:11px; color:#aaa; }
 
     /* ── 토스트 ── */
     .toast {
@@ -962,49 +907,6 @@
   </div>
 </div>
 
-<!-- 단계 쪼개기 모달 -->
-<div class="modal-overlay" id="guideModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">목표 쪼개기</div>
-    <p class="modal-sub">첫 단계(마중물)를 말도 안 되게 작게 만들어요.</p>
-    <div class="guide-section">
-      <div class="guide-section-title">예시</div>
-      <div class="example-box">
-        <div class="example-goal">목표: 아침 6시에 일어나기</div>
-        <ul class="example-steps">
-          <li class="example-step"><span class="step-arrow">→</span><span><span class="pump-highlight">마중물: 이불 속에서 복숭아뼈만 꺼내기</span></span></li>
-          <li class="example-step"><span class="step-arrow">→</span><span>발 하나 바닥에 내려놓기</span></li>
-          <li class="example-step"><span class="step-arrow">→</span><span>일어나 앉기 → 불 켜기</span></li>
-        </ul>
-      </div>
-      <ul class="rule-list">
-        <li class="rule-item"><span>💡</span><span>마중물은 30초 안에, 실패할 수 없을 만큼 작게</span></li>
-        <li class="rule-item"><span>💡</span><span>컨디션 별로인 날엔 마중물 하나만 해도 성공</span></li>
-      </ul>
-    </div>
-    <div class="guide-section">
-      <div class="guide-section-title">내 목표 쪼개기</div>
-      <div class="my-goal-box">
-        <div class="my-goal-label">목표</div>
-        <div class="my-goal-text" id="guideGoalText">—</div>
-      </div>
-      <ul class="guide-steps-preview" id="guideStepsList"></ul>
-      <div class="step-input-row">
-        <input class="step-input" id="newStepInput" type="text"
-          placeholder="단계 추가 (구체적이고 작게)"
-          onkeydown="if(event.key==='Enter')addGuideStep()" />
-        <button class="step-add-btn" onclick="addGuideStep()">추가</button>
-      </div>
-      <div class="pump-select-hint" id="pumpSelectHint"></div>
-    </div>
-    <div class="modal-btn-row">
-      <button class="btn-secondary" onclick="closeModal('guideModal')">닫기</button>
-      <button class="btn-primary" onclick="saveGuideSteps()">저장</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1040,7 +942,6 @@ function makeTrack(name) {
 
 let state = loadState();
 let goalTrackId=null, goalStep=0;
-let guideTrackId=null, guideTmp=[];
 let openMenuId=null, editNameId=null;
 let todayStates=new Set(), todayDuties=new Set(), todayGreyday=false;
 
@@ -1132,8 +1033,6 @@ function markDone(id) {
   save(); toast(`${t.name} — 마중물 완료! 🎉`); renderKanban();
 }
 
-function toggleStep(id,i) { const t=state.tracks.find(t=>t.id===id); if(t&&t.steps[i]){t.steps[i].done=!t.steps[i].done;save();renderKanban();} }
-function toggleStepsUI(id) { const el=document.getElementById('steps-'+id); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
 function startEditName(id) { editNameId=id; closeMenu(); renderKanban(); setTimeout(()=>{const el=document.getElementById('ni-'+id);if(el){el.focus();el.select();}},50); }
 function finishEditName(id,v) { const t=state.tracks.find(t=>t.id===id); if(t&&v.trim()) t.name=v.trim(); editNameId=null; save(); renderKanban(); }
 function deleteTrack(id) { if(!confirm('이 트랙을 삭제할까요?')) return; state.tracks=state.tracks.filter(t=>t.id!==id); save(); closeMenu(); renderKanban(); }
@@ -1154,7 +1053,7 @@ function renderActivityLog() {
       <div class="log-day-label">${day===td?'오늘':day===yd?'어제':day}</div>
       <div class="log-entries">
         ${entries.map(e=>{
-          const time=new Date(e.timestamp).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+          const time=new Date(e.timestamp).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' + new Date(e.timestamp).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
           return `<div class="log-entry">
             <div class="log-cond-dot" style="background:${e.conditionBg||'#f5f5f5'}">${e.conditionEmoji||'—'}</div>
             <div class="log-body">
@@ -1189,19 +1088,9 @@ function renderKanban() {
     const goalHtml=t.goal
       ?`<div class="section-label">목표</div><div class="goal-text-display" onclick="openGoalModal('${t.id}')">${t.goal}</div>`
       :`<div class="goal-empty" onclick="openGoalModal('${t.id}')"><span class="goal-empty-text">아직 목표가 없어요</span><button class="goal-find-btn">목표 찾기</button></div>`;
-    const stepsHtml=t.steps.length>0?`
-      <div class="steps-toggle" onclick="toggleStepsUI('${t.id}')">
-        <span>▸ 실행 단계 (${t.steps.filter(s=>s.done).length}/${t.steps.length})</span>
-        <span style="font-size:11px;text-decoration:underline;margin-left:auto;color:#aaa"
-          onclick="event.stopPropagation();openGuideModal('${t.id}')">수정</span>
-      </div>
-      <ul class="steps-list" id="steps-${t.id}" style="display:none">
-        ${t.steps.map((s,i)=>`<li class="step-item">
-          <input type="checkbox" class="step-check" ${s.done?'checked':''} onchange="toggleStep('${t.id}',${i})" />
-          <span class="step-text ${s.done?'done':''}">${s.text}</span>
-        </li>`).join('')}
-      </ul>`
-      :`<span class="add-step" onclick="openGuideModal('${t.id}')">+ 목표 쪼개기 &amp; 마중물 설정</span><br/><br/>`;
+    const pumpPlaceholder=t.goal
+      ?'예: 관련 파일 하나만 열기, 검색창에 단어 입력하기...'
+      :'예: 노트 앱 열기, 관련 영상 틀어두기...';
     return `<div class="track-card ${isRec?'highlighted':''}">
       ${isRec?'<span class="recommend-tag">⚡ 오늘 여기부터</span>':''}
       <div class="track-header">
@@ -1209,16 +1098,20 @@ function renderKanban() {
         <span class="track-badge ${st.badge}">${st.label}</span>
         <button class="track-menu-btn" onclick="toggleMenu('${t.id}',event)">⋯</button>
       </div>
-      ${menuHtml}${goalHtml}${stepsHtml}
+      ${menuHtml}${goalHtml}
       <div class="pump-primer">
         <div class="pump-label">
           <span>💧 마중물</span>
-          <span class="pump-guide-link" onclick="openGuideModal('${t.id}')">쪼개기 가이드</span>
+          <span class="pump-hint-text">30초 안에 할 수 있는 첫 행동</span>
         </div>
-        <input class="pump-action-input" type="text" placeholder="30초 안에 할 수 있는 첫 행동"
+        <input class="pump-action-input" type="text" placeholder="${pumpPlaceholder}"
           value="${t.pumpAction}"
           onchange="updatePump('${t.id}',this.value)" onblur="updatePump('${t.id}',this.value)" />
-        <div class="pump-hint">말도 안 되게 작게. 실패할 수 없을 만큼.</div>
+        <div class="pump-examples">
+          <span class="pump-ex-chip" onclick="setPump('${t.id}','관련 탭 하나 열기')">탭 열기</span>
+          <span class="pump-ex-chip" onclick="setPump('${t.id}','메모에 제목만 쓰기')">제목만 쓰기</span>
+          <span class="pump-ex-chip" onclick="setPump('${t.id}','타이머 1분 켜기')">1분 타이머</span>
+        </div>
       </div>
       <button class="do-btn" onclick="markDone('${t.id}')">지금 마중물 했어요</button>
     </div>`;
@@ -1311,7 +1204,12 @@ function renderDailyTable() {
   empD.style.display='none'; empM.style.display='none';
   const tk=new Date().toISOString().slice(0,10);
   const yk=new Date(Date.now()-86400000).toISOString().slice(0,10);
-  const label=d=>d===tk?'오늘':d===yk?'어제':d;
+  const label=d=>{
+    if(d===tk) return '오늘';
+    if(d===yk) return '어제';
+    const dt=new Date(d+'T00:00:00');
+    return dt.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+  };
 
   // 테이블
   tbody.innerHTML=log.map(e=>{
@@ -1409,30 +1307,9 @@ function goalNext() {
   }
 }
 
-function openGuideModal(id) {
-  guideTrackId=id;
-  const t=state.tracks.find(t=>t.id===id);
-  guideTmp=[...(t.steps||[])];
-  document.getElementById('guideGoalText').textContent=t.goal||'목표 없음';
-  document.getElementById('newStepInput').value='';
-  renderGuideModal(); openModal('guideModal');
-}
-
-function renderGuideModal() {
-  const t=state.tracks.find(t=>t.id===guideTrackId);
-  document.getElementById('guideStepsList').innerHTML=guideTmp.length===0
-    ?'<li style="font-size:13px;color:#aaa;padding:8px 0;">아직 단계가 없어요.</li>'
-    :guideTmp.map((s,i)=>`<li class="guide-step-item"><span class="guide-step-num">${i+1}</span><span style="flex:1">${s.text}</span><span class="guide-step-del" onclick="removeGuideStep(${i})">✕</span></li>`).join('');
-  document.getElementById('pumpSelectHint').innerHTML=guideTmp.length>0
-    ?`<b>마중물</b>은 첫 번째 단계예요. 현재: <b>${t?.pumpAction||'(없음)'}</b>`:'';
-}
-
-function addGuideStep() { const el=document.getElementById('newStepInput'); const v=el.value.trim(); if(!v) return; guideTmp.push({text:v,done:false}); el.value=''; renderGuideModal(); }
-function removeGuideStep(i) { guideTmp.splice(i,1); renderGuideModal(); }
-function saveGuideSteps() {
-  const t=state.tracks.find(t=>t.id===guideTrackId);
-  if(t){t.steps=guideTmp; if(guideTmp.length>0&&!t.pumpAction)t.pumpAction=guideTmp[0].text; save();}
-  closeModal('guideModal'); renderKanban(); toast('단계가 저장됐어요');
+function setPump(trackId, value) {
+  const t = state.tracks.find(t=>t.id===trackId);
+  if(t) { t.pumpAction=value; save(); renderKanban(); }
 }
 
 function toast(msg) {
@@ -1448,7 +1325,7 @@ document.addEventListener('click',e=>{
   if(openMenuId&&!e.target.closest('.track-menu')&&!e.target.closest('.track-menu-btn')){openMenuId=null;renderKanban();}
 });
 
-['newTrackModal','goalModal','guideModal'].forEach(id=>{
+['newTrackModal','goalModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(id);});
 });
 
