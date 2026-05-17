@@ -1028,19 +1028,31 @@ function reRenderSteps(itemId) {
 }
 
 async function startClassify() {
-  const text = document.getElementById('captureArea')?.value.trim();
+  const area = document.getElementById('captureArea');
+  const text = area?.value.trim();
   if (!text) { toast('할 일을 먼저 입력해요'); return; }
   const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
   if (!lines.length) { toast('할 일을 한 줄씩 입력해요'); return; }
 
   if (!state.inbox) state.inbox=[];
-  const newItems = lines.map(l=>({
+
+  // 이미 같은 텍스트로 pending인 항목 중복 방지
+  const existingTexts = new Set(
+    (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday).map(i=>i.text)
+  );
+  const deduped = lines.filter(l=>!existingTexts.has(l));
+  if (!deduped.length) { toast('이미 분류 대기 중인 항목이에요'); return; }
+
+  const newItems = deduped.map(l=>({
     id:uid(), text:l, createdAt:new Date().toISOString(),
     status:'pending', goalId:null, action:'', isToday:true,
     doneAt:null, failedAt:null,
   }));
   state.inbox = [...newItems, ...state.inbox];
   state.inboxStep = 'review';
+
+  // textarea 초기화 (중복 제출 방지)
+  if (area) area.value = '';
   save();
 
   // AI 분류 시도
