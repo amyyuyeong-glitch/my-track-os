@@ -816,7 +816,10 @@ function renderInbox() {
             <div class="inbox-item-text">${item.text}</div>
             <div class="inbox-item-time">${time}</div>
           </div>
-          <button class="triage-btn" onclick="openTriage('${item.id}')">분류하기 →</button>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="triage-btn" onclick="openTriage('${item.id}')">분류하기 →</button>
+            <button onclick="deletePendingItem('${item.id}')" style="padding:5px 10px;border:none;background:none;font-size:12px;color:var(--g3);cursor:pointer;font-family:inherit;">삭제</button>
+          </div>
         </div>`;
       }).join('')}`;
   }
@@ -832,6 +835,11 @@ function renderInbox() {
         <span class="inbox-done-tag">${decisionLabel[item.status]||item.status}</span>
       </div>`).join('')}
     <button class="text-btn mt8" onclick="clearDoneInbox()">처리된 항목 지우기</button>`;
+}
+
+function deletePendingItem(itemId) {
+  state.inbox = (state.inbox||[]).filter(i=>i.id!==itemId);
+  save(); renderInbox();
 }
 
 function clearDoneInbox() {
