@@ -118,16 +118,38 @@
     .capture-hint { font-size: 12px; color: var(--g3); margin-top: 8px; line-height: 1.6; }
 
     /* Step 2: 분류 결과 */
-    .classify-item { background: var(--white); border-radius: var(--r); padding: 18px; margin-bottom: 12px; }
-    .classify-item-text { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 12px; line-height: 1.4; padding-bottom: 12px; border-bottom: 1px solid var(--g5); }
-    .classify-field { margin-bottom: 12px; }
-    .classify-field-label { font-size: 10px; font-weight: 800; color: var(--g3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .goal-select { width: 100%; border: 1.5px solid var(--g4); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; background: var(--white); color: var(--black); cursor: pointer; }
-    .goal-select:focus { border-color: var(--black); }
-    .action-input { width: 100%; border: 1.5px solid var(--g4); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; color: var(--black); background: var(--white); transition: border-color 0.15s; }
-    .action-input:focus { border-color: var(--black); }
-    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: #f0e8ff; color: #7c3aed; padding: 4px 10px; border-radius: 100px; margin-bottom: 6px; cursor: pointer; border: none; font-family: inherit; transition: background 0.15s; }
+    .classify-item { background: var(--white); border-radius: var(--r); padding: 20px; margin-bottom: 12px; }
+    .classify-item-text { font-size: 17px; font-weight: 800; color: var(--black); margin-bottom: 16px; line-height: 1.4; }
+
+    /* 연결 목표 카드 */
+    .goal-connect-box { border-radius: var(--rs); margin-bottom: 16px; overflow: hidden; }
+    .goal-connect-label { font-size: 10px; font-weight: 800; color: var(--g3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .goal-connect-card { background: var(--g5); border-radius: var(--rs); padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.15s; border: 2px solid transparent; }
+    .goal-connect-card:hover { background: var(--g4); }
+    .goal-connect-card.selected { background: #f0e8ff; border-color: #c4b5fd; }
+    .goal-connect-card.none-selected { background: var(--red-bg); border-color: #fca5a5; }
+    .goal-connect-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .goal-connect-info { flex: 1; min-width: 0; }
+    .goal-connect-track { font-size: 10px; font-weight: 800; color: var(--g2); margin-bottom: 2px; }
+    .goal-connect-name { font-size: 14px; font-weight: 700; color: var(--black); }
+    .goal-connect-change { font-size: 11px; color: var(--g2); flex-shrink: 0; }
+    .goal-connect-select { display: none; width: 100%; border: 1.5px solid #c4b5fd; border-radius: var(--rs); padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; background: var(--white); color: var(--black); cursor: pointer; margin-top: 8px; }
+    .goal-connect-select.show { display: block; }
+
+    /* 실행 계획 */
+    .steps-label { font-size: 10px; font-weight: 800; color: var(--g3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: #f0e8ff; color: #7c3aed; padding: 4px 10px; border-radius: 100px; cursor: pointer; border: none; font-family: inherit; transition: background 0.15s; }
     .ai-badge:hover { background: #e0d0ff; }
+    .steps-list-edit { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .step-edit-row { display: flex; align-items: center; gap: 8px; }
+    .step-edit-num { font-size: 11px; font-weight: 800; color: var(--g3); min-width: 18px; }
+    .step-edit-input { flex: 1; border: 1.5px solid var(--g4); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none; color: var(--black); background: var(--white); transition: border-color 0.15s; }
+    .step-edit-input:focus { border-color: var(--black); }
+    .step-del-btn { width: 30px; height: 30px; border: none; background: none; color: var(--g3); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
+    .step-del-btn:hover { background: var(--red-bg); color: var(--red); }
+    .add-step-btn { width: 100%; padding: 10px; border: 1.5px dashed var(--g3); border-radius: 10px; background: none; font-size: 13px; font-weight: 700; color: var(--g2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .add-step-btn:hover { border-color: var(--black); color: var(--black); }
+
     .classify-skip { font-size: 12px; color: var(--g3); cursor: pointer; text-align: center; padding: 6px; }
     .classify-skip:hover { color: var(--red); }
 
@@ -771,37 +793,79 @@ function renderInbox() {
   container.innerHTML = html;
 }
 
+// 아이템별 실행 단계 임시 저장
+const reviewSteps = {}; // itemId → string[]
+
 function renderReview(pending, container) {
   const allGoals = state.tracks.flatMap(tr=>tr.goals.map(g=>({...g,trackName:tr.name,trackId:tr.id})));
   const goalOptions = allGoals.map(g=>`<option value="${g.id}">${g.trackName} › ${g.name}</option>`).join('');
 
-  const itemsHtml = pending.map((item, idx) => {
-    // AI 제안 우선, 없으면 룰 기반
+  // 초기 steps 세팅
+  pending.forEach(item => {
+    if (!reviewSteps[item.id]) {
+      const ruleBased = autoClassify(item.text);
+      const action = item._suggestedAction || ruleBased.action;
+      reviewSteps[item.id] = action ? [action] : [''];
+    }
+  });
+
+  const itemsHtml = pending.map((item) => {
     const ruleBased = autoClassify(item.text);
-    const aiGoalId = item._suggestedGoalId || null;
-    const aiAction = item._suggestedAction || null;
-    const finalGoalId = aiGoalId || ruleBased.goalId || '';
-    const finalAction = aiAction || ruleBased.action;
-    const isAI = !!aiAction;
+    const finalGoalId = item._suggestedGoalId || ruleBased.goalId || '';
+    const g = findGoalById(finalGoalId);
+    const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
+
+    const goalCardHtml = g && tr
+      ? `<div class="goal-connect-card selected" id="goal-card-${item.id}" onclick="toggleGoalSelect('${item.id}')">
+          <div class="goal-connect-icon">🎯</div>
+          <div class="goal-connect-info">
+            <div class="goal-connect-track">${tr.name}</div>
+            <div class="goal-connect-name">${g.name}</div>
+          </div>
+          <div class="goal-connect-change">변경 ›</div>
+        </div>`
+      : `<div class="goal-connect-card none-selected" id="goal-card-${item.id}" onclick="toggleGoalSelect('${item.id}')">
+          <div class="goal-connect-icon">❓</div>
+          <div class="goal-connect-info">
+            <div class="goal-connect-track">목표 없음</div>
+            <div class="goal-connect-name">탭해서 연결하기</div>
+          </div>
+          <div class="goal-connect-change">선택 ›</div>
+        </div>`;
+
+    const steps = reviewSteps[item.id] || [''];
+    const stepsHtml = steps.map((s, i) => `
+      <div class="step-edit-row" id="step-row-${item.id}-${i}">
+        <span class="step-edit-num">${i+1}</span>
+        <input class="step-edit-input" id="step-${item.id}-${i}" type="text"
+          value="${s}" placeholder="실행 단계 ${i+1}"
+          onchange="updateStep('${item.id}',${i},this.value)"
+          onblur="updateStep('${item.id}',${i},this.value)" />
+        ${steps.length>1 ? `<button class="step-del-btn" onclick="removeStep('${item.id}',${i})">×</button>` : ''}
+      </div>`).join('');
 
     return `<div class="classify-item" id="classify-${item.id}">
       <div class="classify-item-text">${item.text}</div>
-      <div class="classify-field">
-        <div class="classify-field-label">연결할 목표</div>
-        <select class="goal-select" id="sel-goal-${item.id}">
+
+      <div class="goal-connect-label">연결 목표</div>
+      <div class="goal-connect-box">
+        ${goalCardHtml}
+        <select class="goal-connect-select" id="sel-goal-${item.id}"
+          onchange="onGoalChange('${item.id}',this.value)">
           <option value="">목표 선택...</option>
           ${goalOptions}
           <option value="new">+ 새 목표로 만들기</option>
-          <option value="later">나중에 볼게요</option>
-          <option value="out">내 scope 밖이에요</option>
+          <option value="later">⏳ 나중에 볼게요</option>
+          <option value="out">🚫 scope 밖이에요</option>
         </select>
       </div>
-      <div class="classify-field">
-        <button class="ai-badge" onclick="reSuggest('${item.id}')">✦ 자동 제안 클릭해서 새로 받기</button>
-        <div class="classify-field-label">실행 계획</div>
-        <input class="action-input" id="sel-action-${item.id}" type="text"
-          value="${finalAction}" placeholder="오늘 할 첫 번째 작은 행동" />
+
+      <div class="steps-label">
+        <span>실행 계획</span>
+        <button class="ai-badge" onclick="reSuggest('${item.id}')">✦ AI 제안</button>
       </div>
+      <div class="steps-list-edit" id="steps-list-${item.id}">${stepsHtml}</div>
+      <button class="add-step-btn" onclick="addStep('${item.id}')">+ 단계 추가</button>
     </div>`;
   }).join('');
 
@@ -809,33 +873,92 @@ function renderReview(pending, container) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
         <div style="font-size:18px;font-weight:800">검토 & 수정</div>
-        <div style="font-size:12px;color:var(--g2);margin-top:2px">자동 분류 결과를 확인하고 수정해요</div>
+        <div style="font-size:12px;color:var(--g2);margin-top:2px">목표 연결과 실행 계획을 확인해요</div>
       </div>
       <span style="font-size:13px;color:var(--g2);font-weight:700">${pending.length}개</span>
     </div>
     ${itemsHtml}
-    <div class="btn-row" style="margin-top:4px">
+    <div class="btn-row" style="margin-top:16px">
       <button class="btn-secondary" onclick="cancelReview()">다시 입력</button>
       <button class="btn-primary" onclick="confirmReview()">오늘 목록에 추가</button>
     </div>`;
 
-  // 목표 선택값 초기화 및 변경 핸들러
+  // 목표 선택값 초기화
   pending.forEach(item => {
     const sel = document.getElementById(`sel-goal-${item.id}`);
-    const aiGoalId = item._suggestedGoalId;
-    const ruleBased = autoClassify(item.text);
-    const finalGoalId = aiGoalId || ruleBased.goalId || '';
+    const finalGoalId = item._suggestedGoalId || autoClassify(item.text).goalId || '';
     if (sel && finalGoalId) sel.value = finalGoalId;
-    if (sel) sel.onchange = () => {
-      const g = findGoalById(sel.value);
-      const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
-      if (g && tr) {
-        const ex = getPumpExamples(tr.name, g.name);
-        const actionEl = document.getElementById(`sel-action-${item.id}`);
-        if (actionEl && !actionEl.value) actionEl.value = ex[0];
-      }
-    };
   });
+}
+
+function toggleGoalSelect(itemId) {
+  const sel = document.getElementById(`sel-goal-${itemId}`);
+  if (sel) sel.classList.toggle('show');
+}
+
+function onGoalChange(itemId, goalId) {
+  const item = (state.inbox||[]).find(i=>i.id===itemId);
+  if (item) item._suggestedGoalId = goalId;
+  // 카드 다시 그리기
+  const g = findGoalById(goalId);
+  const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
+  const card = document.getElementById(`goal-card-${itemId}`);
+  if (card) {
+    if (g && tr) {
+      card.className = 'goal-connect-card selected';
+      card.innerHTML = `<div class="goal-connect-icon">🎯</div>
+        <div class="goal-connect-info">
+          <div class="goal-connect-track">${tr.name}</div>
+          <div class="goal-connect-name">${g.name}</div>
+        </div>
+        <div class="goal-connect-change">변경 ›</div>`;
+    } else {
+      const labels = {later:'⏳ 나중에', out:'🚫 scope 밖', new:'✨ 새 목표', '':'❓ 미연결'};
+      card.className = 'goal-connect-card none-selected';
+      card.innerHTML = `<div class="goal-connect-icon">${goalId==='later'?'⏳':goalId==='out'?'🚫':'❓'}</div>
+        <div class="goal-connect-info">
+          <div class="goal-connect-track">&nbsp;</div>
+          <div class="goal-connect-name">${labels[goalId]||'미연결'}</div>
+        </div>`;
+    }
+    card.onclick = () => toggleGoalSelect(itemId);
+  }
+  document.getElementById(`sel-goal-${itemId}`)?.classList.remove('show');
+}
+
+function updateStep(itemId, idx, val) {
+  if (!reviewSteps[itemId]) reviewSteps[itemId] = [];
+  reviewSteps[itemId][idx] = val;
+}
+
+function addStep(itemId) {
+  if (!reviewSteps[itemId]) reviewSteps[itemId] = [];
+  reviewSteps[itemId].push('');
+  reRenderSteps(itemId);
+}
+
+function removeStep(itemId, idx) {
+  if (!reviewSteps[itemId]) return;
+  reviewSteps[itemId].splice(idx, 1);
+  reRenderSteps(itemId);
+}
+
+function reRenderSteps(itemId) {
+  const steps = reviewSteps[itemId] || [];
+  const container = document.getElementById(`steps-list-${itemId}`);
+  if (!container) return;
+  container.innerHTML = steps.map((s, i) => `
+    <div class="step-edit-row" id="step-row-${itemId}-${i}">
+      <span class="step-edit-num">${i+1}</span>
+      <input class="step-edit-input" id="step-${itemId}-${i}" type="text"
+        value="${s}" placeholder="실행 단계 ${i+1}"
+        onchange="updateStep('${itemId}',${i},this.value)"
+        onblur="updateStep('${itemId}',${i},this.value)" />
+      ${steps.length>1 ? `<button class="step-del-btn" onclick="removeStep('${itemId}',${i})">×</button>` : ''}
+    </div>`).join('');
+  // 마지막 입력창에 포커스
+  const last = document.getElementById(`step-${itemId}-${steps.length-1}`);
+  if (last) last.focus();
 }
 
 async function startClassify() {
@@ -892,31 +1015,33 @@ function cancelReview() {
 function confirmReview() {
   const pending = (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday);
   pending.forEach(item => {
-    const goalSel = document.getElementById(`sel-goal-${item.id}`)?.value;
-    const action = document.getElementById(`sel-action-${item.id}`)?.value.trim() || item.text;
+    const goalSel = document.getElementById(`sel-goal-${item.id}`)?.value
+                  || item._suggestedGoalId || '';
+    const steps = (reviewSteps[item.id] || []).map(s=>s.trim()).filter(Boolean);
+    const action = steps[0] || item.text;
 
-    if (!goalSel || goalSel==='later') {
+    if (goalSel==='later') {
       item.status='later'; item.isToday=false;
     } else if (goalSel==='out') {
       item.status='out'; item.isToday=false;
     } else if (goalSel==='new') {
-      // 새 목표: 첫 번째 트랙에 추가
       if (state.tracks.length>0) {
         const g = makeGoal(item.text.slice(0,40));
         state.tracks[0].goals.push(g);
-        item.goalId = g.id;
-        item.action = action;
-        item.status = 'classified';
+        item.goalId=g.id; item.action=action; item.steps=steps; item.status='classified';
       }
+    } else if (goalSel) {
+      item.goalId=goalSel; item.action=action; item.steps=steps; item.status='classified';
     } else {
-      item.goalId = goalSel;
-      item.action = action;
-      item.status = 'classified';
+      // 목표 미선택 → 보류
+      item.status='later'; item.isToday=false;
     }
+    delete reviewSteps[item.id];
   });
-  state.inboxStep = 'input';
+  state.inboxStep='input';
   save(); renderInbox(); renderToday();
-  toast(`오늘 목록에 추가됐어요 ✓`);
+  const done = pending.filter(i=>i.status==='classified').length;
+  toast(`${done}개 오늘 목록에 추가됐어요 ✓`);
 }
 
 // ── Claude Code 연동 ──
@@ -987,7 +1112,7 @@ async function reSuggest(itemId) {
   const goalId = goalSel?.value;
   const g = findGoalById(goalId);
   const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
-  const actionEl = document.getElementById(`sel-action-${itemId}`);
+  // actionEl 제거 — steps 방식으로 변경됨
   const badge = document.querySelector(`#classify-${itemId} .ai-badge`);
 
   // 에이전트 호출 시도
@@ -1001,35 +1126,25 @@ async function reSuggest(itemId) {
     });
 
     if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
-      const current = actionEl?.value || '';
-      const next = result.data.find(s => s !== current) || result.data[0];
-      if (actionEl && next) {
-        actionEl.value = next;
-        actionEl.focus();
-        actionEl.style.borderColor = '#7c3aed';
-        setTimeout(() => actionEl.style.borderColor = '', 800);
-      }
-      if (badge) badge.textContent = '✦ 자동 제안 — 다시 받기';
+      reviewSteps[itemId] = result.data;
+      reRenderSteps(itemId);
+      if (badge) { badge.textContent = '✦ AI 제안 — 다시 받기'; badge.disabled = false; }
+      toast('✦ AI가 실행 계획을 제안했어요');
       return;
     }
   } catch(e) {}
 
-  // 폴백: 룰 기반
+  // 폴백: 룰 기반 (3개 제안)
   let suggestions = [];
   for (const [kw, action] of Object.entries(ACTION_TEMPLATES)) {
     if (item.text.includes(kw)) suggestions.push(action);
   }
   if (tr||g) suggestions.push(...getPumpExamples(tr?.name||'', g?.name||''));
   suggestions.push(...PUMP_EXAMPLES['default']);
-  suggestions = [...new Set(suggestions)];
+  suggestions = [...new Set(suggestions)].slice(0, 3);
 
-  const current = actionEl?.value || '';
-  const next = suggestions.find(s=>s!==current) || suggestions[0];
-  if (actionEl && next) {
-    actionEl.value = next;
-    actionEl.style.borderColor = '#7c3aed';
-    setTimeout(() => actionEl.style.borderColor = '', 800);
-  }
+  reviewSteps[itemId] = suggestions;
+  reRenderSteps(itemId);
   if (badge) { badge.textContent = '✦ 자동 제안 — 다시 받기'; badge.disabled = false; }
 }
 
