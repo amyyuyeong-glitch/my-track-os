@@ -243,7 +243,10 @@
 
 <div class="top-bar">
   <span class="logo">내 트랙 OS</span>
-  <button class="icon-btn" onclick="openSheet('logSheet')">📋</button>
+  <div style="display:flex;gap:8px">
+    <button class="icon-btn" onclick="openSheet('logSheet')">📋</button>
+    <button class="icon-btn" onclick="openSheet('settingsSheet')" id="settingsBtn" title="설정">⚙️</button>
+  </div>
 </div>
 
 <!-- ── 🎯 오늘 탭 ── -->
@@ -388,6 +391,37 @@
   </div>
 </div>
 
+<!-- 설정 시트 -->
+<div class="sheet-overlay" id="settingsSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">설정</div>
+    <div class="sheet-sub">Claude API 키를 연결하면 자동 분류가 훨씬 정확해져요</div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;color:var(--g2);margin-bottom:8px">CLAUDE API KEY</div>
+      <input class="sheet-input" id="apiKeyInput" type="password"
+        placeholder="sk-ant-..." style="margin-bottom:8px;font-family:monospace;font-size:13px" />
+      <div style="font-size:12px;color:var(--g3);line-height:1.6">
+        키는 이 기기에만 저장돼요. 외부로 전송되지 않아요.<br/>
+        <a href="https://console.anthropic.com" target="_blank" style="color:var(--g2)">console.anthropic.com</a>에서 발급
+      </div>
+    </div>
+
+    <div id="apiStatus" style="margin-bottom:16px"></div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeSheet('settingsSheet')">닫기</button>
+      <button class="btn-primary" onclick="saveApiKey()">저장</button>
+    </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--g5)">
+      <div style="font-size:11px;font-weight:800;color:var(--g2);margin-bottom:10px">데이터</div>
+      <button class="btn-ghost" onclick="resetAll()" style="width:100%;color:var(--red);border-color:var(--red-bg)">전체 초기화</button>
+    </div>
+  </div>
+</div>
+
 <!-- 활동 로그 -->
 <div class="sheet-overlay" id="logSheet">
   <div class="sheet">
@@ -503,6 +537,110 @@ function switchTab(tab, btn) {
   if(tab==='daily') renderDailyTab();
 }
 
+// ── API 설정 ──
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (key && !key.startsWith('sk-ant-')) {
+    toast('올바른 API 키 형식이 아니에요 (sk-ant-로 시작)');
+    return;
+  }
+  state.apiKey = key;
+  save();
+  updateApiStatus();
+  closeSheet('settingsSheet');
+  toast(key ? 'API 키 저장됐어요 ✓' : 'API 키 삭제됐어요');
+}
+
+function updateApiStatus() {
+  const el = document.getElementById('apiStatus');
+  if (!el) return;
+  if (state.apiKey) {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--green-bg);border-radius:10px">
+      <span style="font-size:16px">✓</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--green)">API 키 연결됨</div>
+        <div style="font-size:11px;color:var(--green);opacity:0.8">${state.apiKey.slice(0,12)}...</div>
+      </div>
+    </div>`;
+    document.getElementById('apiKeyInput').value = state.apiKey;
+  } else {
+    el.innerHTML = `<div style="padding:10px 14px;background:var(--g5);border-radius:10px;font-size:12px;color:var(--g2)">
+      API 키 없음 — 규칙 기반 자동 분류만 사용돼요
+    </div>`;
+  }
+  // 설정 버튼에 연결 상태 표시
+  const btn = document.getElementById('settingsBtn');
+  if (btn) btn.textContent = state.apiKey ? '🔑' : '⚙️';
+}
+
+function resetAll() {
+  if (!confirm('모든 데이터를 초기화할까요? 복구할 수 없어요.')) return;
+  localStorage.removeItem('trackOS_v8');
+  location.reload();
+}
+
+// ── Claude API 분류 ──
+async function classifyWithClaude(items) {
+  const apiKey = state.apiKey;
+  if (!apiKey) return null;
+
+  const allGoals = state.tracks.flatMap(tr =>
+    tr.goals.map(g => ({id:g.id, name:g.name, track:tr.name}))
+  );
+
+  if (!allGoals.length) return null;
+
+  const goalsText = allGoals.map(g => `- goalId: "${g.id}", 목표: "${g.name}", 트랙: "${g.track}"`).join('\n');
+  const tasksText = items.map((t, i) => `${i+1}. "${t.text}"`).join('\n');
+
+  const prompt = `사용자의 목표 목록:
+${goalsText}
+
+오늘 할 일 목록:
+${tasksText}
+
+각 할 일에 대해 아래 JSON 배열로만 응답하세요 (설명 없이):
+[
+  {
+    "index": 1,
+    "goalId": "가장 관련 있는 목표의 goalId (없으면 null)",
+    "action": "30초 안에 할 수 있는 매우 구체적인 첫 번째 행동 (한국어, 1문장, 동사로 끝내기)"
+  }
+]
+
+규칙:
+- action은 말도 안 되게 작고 구체적으로. "파일 열기", "창 열기", "한 줄만 쓰기" 수준
+- 각 할 일의 내용과 목표의 맥락을 고려해서 action 생성
+- goalId는 반드시 제공된 목록에서만 선택`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || `API 오류 ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data.content[0].text.trim();
+  // JSON만 추출
+  const match = text.match(/\[[\s\S]*\]/);
+  if (!match) throw new Error('응답 파싱 실패');
+  return JSON.parse(match[0]);
+}
+
 // ── 분류 로직 (스마트 자동분류) ──
 function autoClassify(text) {
   const allGoals = state.tracks.flatMap(tr=>tr.goals.map(g=>({...g,trackName:tr.name,trackId:tr.id})));
@@ -603,7 +741,14 @@ function renderReview(pending, container) {
   const goalOptions = allGoals.map(g=>`<option value="${g.id}">${g.trackName} › ${g.name}</option>`).join('');
 
   const itemsHtml = pending.map((item, idx) => {
-    const suggested = autoClassify(item.text);
+    // AI 제안 우선, 없으면 룰 기반
+    const ruleBased = autoClassify(item.text);
+    const aiGoalId = item._suggestedGoalId || null;
+    const aiAction = item._suggestedAction || null;
+    const finalGoalId = aiGoalId || ruleBased.goalId || '';
+    const finalAction = aiAction || ruleBased.action;
+    const isAI = !!aiAction;
+
     return `<div class="classify-item" id="classify-${item.id}">
       <div class="classify-item-text">${item.text}</div>
       <div class="classify-field">
@@ -617,10 +762,10 @@ function renderReview(pending, container) {
         </select>
       </div>
       <div class="classify-field">
-        <div class="ai-badge">✦ 자동 제안</div>
+        <div class="ai-badge">${isAI ? '✦ AI 제안' : '✦ 자동 제안'}</div>
         <div class="classify-field-label">실행 계획</div>
         <input class="action-input" id="sel-action-${item.id}" type="text"
-          value="${suggested.action}" placeholder="오늘 할 첫 번째 작은 행동" />
+          value="${finalAction}" placeholder="오늘 할 첫 번째 작은 행동" />
       </div>
     </div>`;
   }).join('');
@@ -639,11 +784,13 @@ function renderReview(pending, container) {
       <button class="btn-primary" onclick="confirmReview()">오늘 목록에 추가</button>
     </div>`;
 
-  // 목표 선택 시 자동 제안 업데이트
+  // 목표 선택값 초기화 및 변경 핸들러
   pending.forEach(item => {
     const sel = document.getElementById(`sel-goal-${item.id}`);
-    const suggested = autoClassify(item.text);
-    if (sel && suggested.goalId) sel.value = suggested.goalId;
+    const aiGoalId = item._suggestedGoalId;
+    const ruleBased = autoClassify(item.text);
+    const finalGoalId = aiGoalId || ruleBased.goalId || '';
+    if (sel && finalGoalId) sel.value = finalGoalId;
     if (sel) sel.onchange = () => {
       const g = findGoalById(sel.value);
       const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
@@ -656,11 +803,12 @@ function renderReview(pending, container) {
   });
 }
 
-function startClassify() {
+async function startClassify() {
   const text = document.getElementById('captureArea')?.value.trim();
   if (!text) { toast('할 일을 먼저 입력해요'); return; }
   const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
   if (!lines.length) { toast('할 일을 한 줄씩 입력해요'); return; }
+
   if (!state.inbox) state.inbox=[];
   const newItems = lines.map(l=>({
     id:uid(), text:l, createdAt:new Date().toISOString(),
@@ -669,7 +817,34 @@ function startClassify() {
   }));
   state.inbox = [...newItems, ...state.inbox];
   state.inboxStep = 'review';
-  save(); renderInbox();
+  save();
+
+  // AI 분류 시도
+  if (state.apiKey) {
+    const btn = document.querySelector('[onclick="startClassify()"]');
+    if (btn) { btn.textContent = '✦ AI 분류 중...'; btn.disabled = true; }
+    try {
+      const results = await classifyWithClaude(newItems);
+      if (results) {
+        results.forEach(r => {
+          const item = newItems[r.index - 1];
+          if (item) {
+            if (r.goalId) item._suggestedGoalId = r.goalId;
+            if (r.action) item._suggestedAction = r.action;
+          }
+        });
+        save();
+        toast('✦ AI 분류 완료');
+      }
+    } catch(e) {
+      console.error(e);
+      toast(`AI 오류: ${e.message} — 기본 분류로 진행해요`);
+    } finally {
+      if (btn) { btn.textContent = '자동 분류하기'; btn.disabled = false; }
+    }
+  }
+
+  renderInbox();
 }
 
 function cancelReview() {
@@ -1059,7 +1234,7 @@ function renderDailyLog(){
 }
 
 // ── 시트 ──
-function openSheet(id){document.getElementById(id).classList.add('open');if(id==='logSheet')renderLogSheet();}
+function openSheet(id){document.getElementById(id).classList.add('open');if(id==='logSheet')renderLogSheet();if(id==='settingsSheet')updateApiStatus();}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.sheet-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 
@@ -1078,6 +1253,7 @@ if(state.conditionDate!==todayKey){
 
 renderToday();
 updateBadge();
+updateApiStatus();
 </script>
 </body>
 </html>
