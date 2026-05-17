@@ -126,7 +126,8 @@
     .goal-select:focus { border-color: var(--black); }
     .action-input { width: 100%; border: 1.5px solid var(--g4); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; color: var(--black); background: var(--white); transition: border-color 0.15s; }
     .action-input:focus { border-color: var(--black); }
-    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: #f0e8ff; color: #7c3aed; padding: 2px 8px; border-radius: 100px; margin-bottom: 6px; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: #f0e8ff; color: #7c3aed; padding: 4px 10px; border-radius: 100px; margin-bottom: 6px; cursor: pointer; border: none; font-family: inherit; transition: background 0.15s; }
+    .ai-badge:hover { background: #e0d0ff; }
     .classify-skip { font-size: 12px; color: var(--g3); cursor: pointer; text-align: center; padding: 6px; }
     .classify-skip:hover { color: var(--red); }
 
@@ -737,12 +738,7 @@ function renderInbox() {
     </div>`;
   }
 
-  html += `<div class="btn-row">
-    <button class="btn-secondary" onclick="openClaudeExport()" style="flex:none;padding:14px 16px;display:flex;align-items:center;gap:6px">
-      <span>🤖</span> Claude Code
-    </button>
-    <button class="btn-primary" onclick="startClassify()">자동 분류하기</button>
-  </div>`;
+  html += `<button class="btn-primary" onclick="startClassify()">자동 분류하기</button>`;
 
   if (classified.length > 0) {
     html += `<div class="divider"></div>
@@ -798,7 +794,7 @@ function renderReview(pending, container) {
         </select>
       </div>
       <div class="classify-field">
-        <div class="ai-badge">${isAI ? '✦ AI 제안' : '✦ 자동 제안'}</div>
+        <button class="ai-badge" onclick="reSuggest('${item.id}')">✦ 자동 제안 클릭해서 새로 받기</button>
         <div class="classify-field-label">실행 계획</div>
         <input class="action-input" id="sel-action-${item.id}" type="text"
           value="${finalAction}" placeholder="오늘 할 첫 번째 작은 행동" />
@@ -978,6 +974,49 @@ function importClaudeResult() {
   save(); closeSheet('claudeExportSheet'); renderInbox(); renderToday();
   const done = results.filter(r=>r.scope==='in'||!r.scope).length;
   toast(`${done}개 분류 완료 ✓`);
+}
+
+function reSuggest(itemId) {
+  const item = (state.inbox||[]).find(i=>i.id===itemId);
+  if (!item) return;
+
+  // 현재 선택된 목표 기반으로 제안
+  const goalSel = document.getElementById(`sel-goal-${itemId}`);
+  const goalId = goalSel?.value;
+  const g = findGoalById(goalId);
+  const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
+
+  // 텍스트 키워드 + 목표 맥락으로 제안 생성
+  let suggestions = [];
+
+  // 1. 할 일 텍스트 기반 키워드 매칭
+  for (const [kw, action] of Object.entries(ACTION_TEMPLATES)) {
+    if (item.text.includes(kw)) suggestions.push(action);
+  }
+
+  // 2. 목표/트랙 기반 예시
+  if (tr || g) {
+    const ex = getPumpExamples(tr?.name||'', g?.name||'');
+    suggestions = [...suggestions, ...ex];
+  }
+
+  // 3. 기본
+  suggestions.push(...PUMP_EXAMPLES['default']);
+
+  // 중복 제거
+  suggestions = [...new Set(suggestions)];
+
+  // 이전 값과 다른 것으로 순환
+  const actionEl = document.getElementById(`sel-action-${itemId}`);
+  const current = actionEl?.value || '';
+  const next = suggestions.find(s => s !== current) || suggestions[0];
+
+  if (actionEl && next) {
+    actionEl.value = next;
+    actionEl.focus();
+    actionEl.style.borderColor = '#7c3aed';
+    setTimeout(() => actionEl.style.borderColor = '', 800);
+  }
 }
 
 function updateBadge() {
