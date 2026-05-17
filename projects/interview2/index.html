@@ -616,61 +616,64 @@ function resetAll() {
 }
 
 // ── Claude API 분류 ──
+const LOCAL_AGENT = 'http://localhost:3001';
+
+async function callAgent(endpoint, body) {
+  // 1순위: 로컬 에이전트, 2순위: Cloudflare 프록시
+  const urls = [
+    LOCAL_AGENT + endpoint,
+    state.proxyUrl ? state.proxyUrl : null,
+  ].filter(Boolean);
+
+  for (const url of urls) {
+    try {
+      const isLocal = url.startsWith(LOCAL_AGENT);
+      const fetchBody = isLocal ? body : {
+        model: 'claude-haiku-4-5', max_tokens: 1024,
+        messages: [{ role: 'user', content: JSON.stringify(body) }]
+      };
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fetchBody),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) continue;
+      return { data: await res.json(), isLocal };
+    } catch(e) {
+      continue;
+    }
+  }
+  return null;
+}
+
 async function classifyWithClaude(items) {
   const proxyUrl = state.proxyUrl;
-  if (!proxyUrl) return null;
+  if (!proxyUrl && !(await isAgentRunning())) return null;
 
   const allGoals = state.tracks.flatMap(tr =>
     tr.goals.map(g => ({id:g.id, name:g.name, track:tr.name}))
   );
-  if (!allGoals.length) return null;
 
-  const goalsText = allGoals.map(g =>
-    `- goalId: "${g.id}", 목표: "${g.name}", 트랙: "${g.track}"`
-  ).join('\n');
-  const tasksText = items.map((t, i) => `${i+1}. "${t.text}"`).join('\n');
-
-  const prompt = `사용자의 목표 목록:
-${goalsText}
-
-오늘 할 일 목록:
-${tasksText}
-
-각 할 일에 대해 아래 JSON 배열로만 응답하세요 (설명 없이):
-[
-  {
-    "index": 1,
-    "goalId": "가장 관련 있는 목표의 goalId (없으면 null)",
-    "action": "30초 안에 할 수 있는 매우 구체적인 첫 번째 행동 (한국어, 1문장, 동사로 끝내기)"
-  }
-]
-
-규칙:
-- action은 말도 안 되게 작고 구체적으로. 예: "포트폴리오.psd 파일 열기", "채용공고 탭 열기"
-- 각 할 일 내용과 연결된 목표의 맥락을 함께 고려해서 action 생성
-- goalId는 반드시 위 목록에서만 선택, 없으면 null`;
-
-  // Worker URL 호출 (API 키는 서버에만 있음)
-  const res = await fetch(proxyUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }]
-    })
+  const result = await callAgent('/classify', {
+    tasks: items.map(i => i.text),
+    goals: allGoals,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({error:{message:`오류 ${res.status}`}}));
-    throw new Error(err.error?.message || `오류 ${res.status}`);
-  }
+  if (!result) return null;
+  return result.data;
+}
 
-  const data = await res.json();
-  const text = data.content[0].text.trim();
-  const match = text.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('응답 파싱 실패');
-  return JSON.parse(match[0]);
+async function isAgentRunning() {
+  try {
+    const res = await fetch(LOCAL_AGENT + '/classify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tasks: ['test'], goals: [] }),
+      signal: AbortSignal.timeout(1000),
+    });
+    return true;
+  } catch(e) { return false; }
 }
 
 // ── 분류 로직 (스마트 자동분류) ──
@@ -976,47 +979,58 @@ function importClaudeResult() {
   toast(`${done}개 분류 완료 ✓`);
 }
 
-function reSuggest(itemId) {
+async function reSuggest(itemId) {
   const item = (state.inbox||[]).find(i=>i.id===itemId);
   if (!item) return;
 
-  // 현재 선택된 목표 기반으로 제안
   const goalSel = document.getElementById(`sel-goal-${itemId}`);
   const goalId = goalSel?.value;
   const g = findGoalById(goalId);
   const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
+  const actionEl = document.getElementById(`sel-action-${itemId}`);
+  const badge = document.querySelector(`#classify-${itemId} .ai-badge`);
 
-  // 텍스트 키워드 + 목표 맥락으로 제안 생성
+  // 에이전트 호출 시도
+  if (badge) { badge.textContent = '✦ 생각 중...'; badge.disabled = true; }
+
+  try {
+    const result = await callAgent('/suggest', {
+      task: item.text,
+      goalName: g?.name || '',
+      trackName: tr?.name || '',
+    });
+
+    if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
+      const current = actionEl?.value || '';
+      const next = result.data.find(s => s !== current) || result.data[0];
+      if (actionEl && next) {
+        actionEl.value = next;
+        actionEl.focus();
+        actionEl.style.borderColor = '#7c3aed';
+        setTimeout(() => actionEl.style.borderColor = '', 800);
+      }
+      if (badge) badge.textContent = '✦ 자동 제안 — 다시 받기';
+      return;
+    }
+  } catch(e) {}
+
+  // 폴백: 룰 기반
   let suggestions = [];
-
-  // 1. 할 일 텍스트 기반 키워드 매칭
   for (const [kw, action] of Object.entries(ACTION_TEMPLATES)) {
     if (item.text.includes(kw)) suggestions.push(action);
   }
-
-  // 2. 목표/트랙 기반 예시
-  if (tr || g) {
-    const ex = getPumpExamples(tr?.name||'', g?.name||'');
-    suggestions = [...suggestions, ...ex];
-  }
-
-  // 3. 기본
+  if (tr||g) suggestions.push(...getPumpExamples(tr?.name||'', g?.name||''));
   suggestions.push(...PUMP_EXAMPLES['default']);
-
-  // 중복 제거
   suggestions = [...new Set(suggestions)];
 
-  // 이전 값과 다른 것으로 순환
-  const actionEl = document.getElementById(`sel-action-${itemId}`);
   const current = actionEl?.value || '';
-  const next = suggestions.find(s => s !== current) || suggestions[0];
-
+  const next = suggestions.find(s=>s!==current) || suggestions[0];
   if (actionEl && next) {
     actionEl.value = next;
-    actionEl.focus();
     actionEl.style.borderColor = '#7c3aed';
     setTimeout(() => actionEl.style.borderColor = '', 800);
   }
+  if (badge) { badge.textContent = '✦ 자동 제안 — 다시 받기'; badge.disabled = false; }
 }
 
 function updateBadge() {
