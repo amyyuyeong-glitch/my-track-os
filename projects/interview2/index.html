@@ -858,6 +858,15 @@ function renderReview(pending, container) {
           <option value="later">⏳ 나중에 볼게요</option>
           <option value="out">🚫 scope 밖이에요</option>
         </select>
+        <input class="sheet-input" id="new-goal-name-${item.id}" type="text"
+          placeholder="새 목표 이름 입력..."
+          style="display:none;margin-top:8px;font-size:14px;padding:10px 14px"
+          onkeydown="if(event.key==='Enter')confirmNewGoalInline('${item.id}')" />
+        <div id="new-goal-track-sel-${item.id}" style="display:none;margin-top:6px">
+          <select class="goal-connect-select show" id="new-goal-track-${item.id}">
+            ${state.tracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
+          </select>
+        </div>
       </div>
 
       <div class="steps-label">
@@ -899,31 +908,88 @@ function toggleGoalSelect(itemId) {
 function onGoalChange(itemId, goalId) {
   const item = (state.inbox||[]).find(i=>i.id===itemId);
   if (item) item._suggestedGoalId = goalId;
-  // 카드 다시 그리기
+
+  const nameInput = document.getElementById(`new-goal-name-${itemId}`);
+  const trackSel = document.getElementById(`new-goal-track-sel-${itemId}`);
+
+  // 새 목표 입력창 토글
+  if (goalId === 'new') {
+    if (nameInput) { nameInput.style.display = 'block'; nameInput.focus(); }
+    if (trackSel) trackSel.style.display = 'block';
+    updateGoalCard(itemId, null, null, 'new');
+    return;
+  } else {
+    if (nameInput) nameInput.style.display = 'none';
+    if (trackSel) trackSel.style.display = 'none';
+  }
+
   const g = findGoalById(goalId);
   const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
-  const card = document.getElementById(`goal-card-${itemId}`);
-  if (card) {
-    if (g && tr) {
-      card.className = 'goal-connect-card selected';
-      card.innerHTML = `<div class="goal-connect-icon">🎯</div>
-        <div class="goal-connect-info">
-          <div class="goal-connect-track">${tr.name}</div>
-          <div class="goal-connect-name">${g.name}</div>
-        </div>
-        <div class="goal-connect-change">변경 ›</div>`;
-    } else {
-      const labels = {later:'⏳ 나중에', out:'🚫 scope 밖', new:'✨ 새 목표', '':'❓ 미연결'};
-      card.className = 'goal-connect-card none-selected';
-      card.innerHTML = `<div class="goal-connect-icon">${goalId==='later'?'⏳':goalId==='out'?'🚫':'❓'}</div>
-        <div class="goal-connect-info">
-          <div class="goal-connect-track">&nbsp;</div>
-          <div class="goal-connect-name">${labels[goalId]||'미연결'}</div>
-        </div>`;
-    }
-    card.onclick = () => toggleGoalSelect(itemId);
-  }
+  updateGoalCard(itemId, g, tr, goalId);
   document.getElementById(`sel-goal-${itemId}`)?.classList.remove('show');
+}
+
+function updateGoalCard(itemId, g, tr, goalId) {
+  const card = document.getElementById(`goal-card-${itemId}`);
+  if (!card) return;
+  if (g && tr) {
+    card.className = 'goal-connect-card selected';
+    card.innerHTML = `<div class="goal-connect-icon">🎯</div>
+      <div class="goal-connect-info">
+        <div class="goal-connect-track">${tr.name}</div>
+        <div class="goal-connect-name">${g.name}</div>
+      </div>
+      <div class="goal-connect-change">변경 ›</div>`;
+  } else if (goalId === 'new') {
+    card.className = 'goal-connect-card selected';
+    card.innerHTML = `<div class="goal-connect-icon">✨</div>
+      <div class="goal-connect-info">
+        <div class="goal-connect-track">새 목표</div>
+        <div class="goal-connect-name">아래에 이름 입력</div>
+      </div>`;
+  } else {
+    const icons = {later:'⏳', out:'🚫', '':'❓'};
+    const names = {later:'나중에 볼게요', out:'scope 밖이에요', '':'탭해서 연결하기'};
+    card.className = 'goal-connect-card none-selected';
+    card.innerHTML = `<div class="goal-connect-icon">${icons[goalId]||'❓'}</div>
+      <div class="goal-connect-info">
+        <div class="goal-connect-track">&nbsp;</div>
+        <div class="goal-connect-name">${names[goalId]||'미연결'}</div>
+      </div>`;
+  }
+  card.onclick = () => toggleGoalSelect(itemId);
+}
+
+function confirmNewGoalInline(itemId) {
+  const nameInput = document.getElementById(`new-goal-name-${itemId}`);
+  const trackSel = document.getElementById(`new-goal-track-${itemId}`);
+  const name = nameInput?.value.trim();
+  const trackId = trackSel?.value;
+  if (!name) { nameInput?.focus(); toast('목표 이름을 입력해요'); return; }
+
+  const tr = state.tracks.find(t=>t.id===trackId) || state.tracks[0];
+  if (!tr) { toast('트랙을 먼저 만들어요'); return; }
+
+  const newGoal = makeGoal(name);
+  tr.goals.push(newGoal);
+  save();
+
+  // 선택 반영
+  const sel = document.getElementById(`sel-goal-${itemId}`);
+  const opt = document.createElement('option');
+  opt.value = newGoal.id; opt.textContent = `${tr.name} › ${name}`;
+  sel?.insertBefore(opt, sel.querySelector('option[value="new"]'));
+  if (sel) sel.value = newGoal.id;
+
+  const item = (state.inbox||[]).find(i=>i.id===itemId);
+  if (item) item._suggestedGoalId = newGoal.id;
+
+  if (nameInput) nameInput.style.display = 'none';
+  const trackSelDiv = document.getElementById(`new-goal-track-sel-${itemId}`);
+  if (trackSelDiv) trackSelDiv.style.display = 'none';
+
+  updateGoalCard(itemId, newGoal, tr, newGoal.id);
+  toast(`"${name}" 목표가 추가됐어요 ✓`);
 }
 
 function updateStep(itemId, idx, val) {
