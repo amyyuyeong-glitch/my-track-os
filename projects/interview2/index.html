@@ -60,6 +60,25 @@
     .cond-btn .ct { font-size: 10px; opacity: 0.7; display: block; }
     .cond-btn.active { border-color: transparent; color: #fff; }
 
+    /* ── 오늘 진행 현황 ── */
+    .progress-card { background: var(--white); border-radius: var(--r); padding: 16px 18px; margin-bottom: 16px; }
+    .progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .progress-title { font-size: 13px; font-weight: 800; }
+    .progress-count { font-size: 13px; font-weight: 800; color: var(--g2); }
+    .progress-bar-bg { height: 8px; background: var(--g4); border-radius: 100px; overflow: hidden; margin-bottom: 14px; }
+    .progress-bar-fill { height: 100%; background: var(--black); border-radius: 100px; transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .progress-list { display: flex; flex-direction: column; gap: 6px; }
+    .progress-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; }
+    .progress-row.done { background: var(--g5); }
+    .progress-check { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+    .progress-check.done { background: var(--black); color: #fff; }
+    .progress-check.todo { border: 2px solid var(--g4); color: transparent; }
+    .progress-row-info { flex: 1; min-width: 0; }
+    .progress-row-track { font-size: 10px; font-weight: 800; color: var(--g3); }
+    .progress-row-name { font-size: 13px; font-weight: 700; color: var(--black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-row-name.done { color: var(--g2); text-decoration: line-through; }
+    .progress-done-time { font-size: 11px; color: var(--g3); flex-shrink: 0; }
+
     /* ── 오늘 탭 ── */
     .today-empty { background: var(--white); border-radius: var(--r); padding: 40px 24px; text-align: center; }
     .today-empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -254,6 +273,9 @@
     <div class="cond-strategy" id="condStrategy" style="display:none"></div>
     <div class="cond-grid" id="condGrid"></div>
   </div>
+
+  <!-- 진행 현황 -->
+  <div id="progressCard"></div>
 
   <!-- 목표 카드들 -->
   <div id="todayCards"></div>
@@ -588,11 +610,64 @@ function getStatusLabel(d) {
   return       {badge:'badge-red', label:`${d}일 전`};
 }
 
+function isToday(iso) {
+  if (!iso) return false;
+  return iso.slice(0,10) === new Date().toISOString().slice(0,10);
+}
+
+function renderProgressCard(goals) {
+  const card = document.getElementById('progressCard');
+  if (!goals.length) { card.innerHTML=''; return; }
+  const doneGoals = goals.filter(g=>isToday(g.lastDone));
+  const todoGoals = goals.filter(g=>!isToday(g.lastDone));
+  const total = goals.length;
+  const done = doneGoals.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  const allRows = [
+    ...doneGoals.map(g=>{
+      const time = new Date(g.lastDone).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="progress-row done">
+        <div class="progress-check done">✓</div>
+        <div class="progress-row-info">
+          <div class="progress-row-track">${g.trackName}</div>
+          <div class="progress-row-name done">${g.name}</div>
+        </div>
+        <div class="progress-done-time">${time}</div>
+      </div>`;
+    }),
+    ...todoGoals.map(g=>`
+      <div class="progress-row">
+        <div class="progress-check todo">○</div>
+        <div class="progress-row-info">
+          <div class="progress-row-track">${g.trackName}</div>
+          <div class="progress-row-name">${g.name}</div>
+        </div>
+      </div>`),
+  ].join('');
+
+  const msg = done===0 ? '아직 시작 전이에요' : done===total ? '오늘 다 했어요! 🎉' : `${total-done}개 남았어요`;
+
+  card.innerHTML = `
+    <div class="progress-card">
+      <div class="progress-top">
+        <span class="progress-title">오늘 진행</span>
+        <span class="progress-count">${done} / ${total} · ${msg}</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="progress-list">${allRows}</div>
+    </div>`;
+}
+
 function renderToday() {
   renderCond();
   const recId = getRecommendedGoalId();
   const goals = allGoals().filter(g=>g.status==='active');
   const container = document.getElementById('todayCards');
+
+  renderProgressCard(goals);
 
   if (!goals.length) {
     container.innerHTML = `
