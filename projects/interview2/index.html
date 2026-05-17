@@ -4,1434 +4,1044 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>내 트랙 OS</title>
   <style>
     :root {
-      --bg: #f5f5f0;
+      --bg: #f4f4ef;
       --white: #fff;
       --black: #1a1a1a;
-      --gray1: #888;
-      --gray2: #aaa;
-      --gray3: #e0e0e0;
-      --gray4: #f0f0f0;
-      --gray5: #fafafa;
-      --radius-lg: 20px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
-      --radius-xs: 10px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.08);
-      --tab-h: 64px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --g1: #555;
+      --g2: #888;
+      --g3: #bbb;
+      --g4: #e4e4e0;
+      --g5: #f0f0eb;
+      --tab-h: 60px;
+      --safe: env(safe-area-inset-bottom, 0px);
+      --r: 16px;
+      --rs: 12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--black);
-      min-height: 100vh;
-      padding-bottom: calc(var(--tab-h) + var(--safe-bottom));
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--black); min-height: 100vh; padding-bottom: calc(var(--tab-h) + var(--safe)); }
 
     /* ── 헤더 ── */
-    header {
-      padding: 20px 20px 0;
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    .top-bar { max-width: 640px; margin: 0 auto; padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    .top-actions { display: flex; gap: 8px; }
+    .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--white); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 
-    .header-left h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-    .header-left .subtitle { font-size: 12px; color: var(--gray1); margin-top: 2px; }
-
-    .header-btn {
-      display: flex; align-items: center; gap: 5px;
-      padding: 8px 16px;
-      background: var(--black); color: #fff;
-      border: none; border-radius: 100px;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: inherit;
-      white-space: nowrap;
-    }
+    /* ── 탭 패널 ── */
+    .panel { display: none; max-width: 640px; margin: 0 auto; padding: 16px 20px; }
+    .panel.active { display: block; }
 
     /* ── 하단 탭바 ── */
-    .tab-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: calc(var(--tab-h) + var(--safe-bottom));
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(0,0,0,0.06);
-      display: flex;
-      align-items: flex-start;
-      padding-top: 8px;
-      padding-bottom: var(--safe-bottom);
-      z-index: 90;
-    }
-
-    .tab-btn {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 6px 0;
-      border: none; background: none;
-      font-family: inherit; cursor: pointer;
-      color: var(--gray2);
-      transition: color 0.15s;
-    }
-
+    .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--tab-h) + var(--safe)); background: rgba(255,255,255,0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(0,0,0,0.07); display: flex; align-items: flex-start; padding-top: 6px; z-index: 80; }
+    .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: none; background: none; font-family: inherit; cursor: pointer; color: var(--g3); transition: color 0.15s; position: relative; }
     .tab-btn.active { color: var(--black); }
-
     .tab-icon { font-size: 22px; line-height: 1; }
-    .tab-label { font-size: 10px; font-weight: 600; }
+    .tab-label { font-size: 10px; font-weight: 700; }
+    .inbox-badge { position: absolute; top: 4px; right: calc(50% - 18px); background: #ff3b30; color: #fff; font-size: 10px; font-weight: 800; border-radius: 100px; padding: 1px 5px; min-width: 16px; text-align: center; display: none; }
+    .inbox-badge.show { display: block; }
 
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    /* ── 컨디션 카드 ── */
+    .cond-card { background: var(--white); border-radius: var(--r); padding: 16px 18px; margin-bottom: 16px; }
+    .cond-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .cond-title { font-size: 13px; font-weight: 800; }
+    .cond-sel { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .cond-badge { padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .cond-bar-wrap { flex: 1; height: 5px; background: var(--g4); border-radius: 100px; overflow: hidden; max-width: 120px; }
+    .cond-bar-fill { height: 100%; border-radius: 100px; transition: width 0.4s; }
+    .cond-change { font-size: 11px; color: var(--g3); cursor: pointer; text-decoration: underline; white-space: nowrap; }
+    .cond-strategy { font-size: 12px; color: var(--g2); line-height: 1.6; padding: 9px 12px; background: var(--g5); border-radius: 10px; margin-bottom: 12px; }
+    .cond-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    @media (max-width: 400px) { .cond-grid { grid-template-columns: repeat(2, 1fr); } }
+    .cond-btn { padding: 9px 4px; border-radius: 10px; border: 1.5px solid var(--g4); background: var(--white); font-size: 11px; cursor: pointer; color: var(--g1); text-align: center; font-family: inherit; transition: all 0.15s; min-height: 68px; }
+    .cond-btn .ce { font-size: 18px; display: block; margin-bottom: 4px; }
+    .cond-btn .cn { font-weight: 700; display: block; font-size: 11px; margin-bottom: 1px; }
+    .cond-btn .ct { font-size: 10px; opacity: 0.7; display: block; }
+    .cond-btn.active { border-color: transparent; color: #fff; }
 
-    /* ── 컨디션 ── */
-    .condition-bar { max-width: 1200px; margin: 16px auto 0; padding: 0 20px; }
+    /* ── 오늘 탭 ── */
+    .today-empty { background: var(--white); border-radius: var(--r); padding: 40px 24px; text-align: center; }
+    .today-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .today-empty-text { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
+    .today-empty-sub { font-size: 13px; color: var(--g2); line-height: 1.6; }
 
-    .condition-card {
-      background: var(--white);
-      border-radius: var(--radius-md);
-      padding: 18px 20px;
-    }
+    .goal-card { background: var(--white); border-radius: var(--r); padding: 18px 18px 14px; margin-bottom: 12px; position: relative; }
+    .goal-card.rec { outline: 2px solid var(--black); }
+    .goal-card-track { font-size: 10px; font-weight: 800; color: var(--g3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .goal-card-name { font-size: 17px; font-weight: 800; color: var(--black); margin-bottom: 14px; line-height: 1.3; }
+    .rec-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: var(--black); color: #fff; padding: 3px 8px; border-radius: 100px; margin-bottom: 10px; }
 
-    .condition-top {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 14px; flex-wrap: wrap;
-    }
+    .pump-area { background: var(--g5); border-radius: var(--rs); padding: 13px 14px; margin-bottom: 12px; cursor: pointer; transition: background 0.15s; }
+    .pump-area:hover { background: var(--g4); }
+    .pump-area-label { font-size: 10px; font-weight: 800; color: var(--g2); margin-bottom: 5px; }
+    .pump-area-text { font-size: 15px; font-weight: 700; color: var(--black); line-height: 1.4; }
+    .pump-area-hint { font-size: 11px; color: var(--g3); margin-top: 3px; }
+    .pump-area-empty { border: 2px dashed var(--g4); border-radius: var(--rs); padding: 14px; margin-bottom: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .pump-area-empty:hover { border-color: var(--g2); background: var(--g5); }
+    .pump-area-empty-text { font-size: 13px; font-weight: 700; color: var(--g2); }
 
-    .condition-label { font-size: 14px; font-weight: 700; }
+    .done-btn { width: 100%; padding: 13px; background: var(--black); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+    .done-btn:active { opacity: 0.7; }
+    .done-btn.empty { background: var(--g4); color: var(--g2); }
 
-    .condition-selected { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .last-done { font-size: 11px; color: var(--g3); text-align: center; margin-top: 8px; }
 
-    .condition-selected-badge {
-      display: flex; align-items: center; gap: 5px;
-      padding: 6px 12px; border-radius: 100px;
-      font-size: 12px; font-weight: 700;
-      white-space: nowrap;
-    }
+    /* ── 트랙 탭 ── */
+    .track-section { margin-bottom: 16px; }
+    .track-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .track-head-name { font-size: 16px; font-weight: 800; flex: 1; }
+    .track-head-btn { background: none; border: none; font-size: 20px; color: var(--g3); cursor: pointer; padding: 4px; min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
 
-    .condition-energy-bar {
-      flex: 1; height: 5px;
-      background: var(--gray4); border-radius: 100px; overflow: hidden;
-    }
+    .goal-row { background: var(--white); border-radius: var(--rs); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.1s; }
+    .goal-row:hover { background: var(--g5); }
+    .goal-row-info { flex: 1; min-width: 0; }
+    .goal-row-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .goal-row-pump { font-size: 12px; color: var(--g2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .goal-row-badge { font-size: 10px; padding: 3px 8px; border-radius: 100px; font-weight: 700; flex-shrink: 0; }
+    .goal-row-arrow { color: var(--g3); font-size: 14px; flex-shrink: 0; }
 
-    .condition-energy-fill { height: 100%; border-radius: 100px; transition: width 0.4s ease; }
+    .add-goal-btn { width: 100%; padding: 12px; border: 1.5px dashed var(--g3); border-radius: var(--rs); background: none; font-size: 13px; font-weight: 700; color: var(--g2); cursor: pointer; font-family: inherit; transition: all 0.15s; margin-bottom: 8px; }
+    .add-goal-btn:hover { border-color: var(--black); color: var(--black); }
+    .add-track-btn { width: 100%; padding: 14px; border: 2px dashed var(--g3); border-radius: var(--r); background: none; font-size: 14px; font-weight: 700; color: var(--g2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .add-track-btn:hover { border-color: var(--black); color: var(--black); }
 
-    .condition-change {
-      font-size: 11px; color: var(--gray2);
-      cursor: pointer; text-decoration: underline; white-space: nowrap;
-    }
+    /* ── 인박스 탭 ── */
+    .capture-box { background: var(--white); border-radius: var(--r); padding: 16px 18px; margin-bottom: 16px; }
+    .capture-label { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .capture-row { display: flex; gap: 10px; }
+    .capture-input { flex: 1; border: 1.5px solid var(--g4); border-radius: 10px; padding: 12px 14px; font-size: 15px; font-family: inherit; outline: none; color: var(--black); transition: border-color 0.15s; background: var(--g5); }
+    .capture-input:focus { border-color: var(--black); background: var(--white); }
+    .capture-add { padding: 12px 18px; background: var(--black); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
 
-    .condition-strategy {
-      font-size: 12px; color: #666; line-height: 1.6;
-      padding: 10px 14px; background: #f9f9f7; border-radius: var(--radius-xs);
-      margin-bottom: 14px;
-    }
+    .inbox-section-title { font-size: 13px; font-weight: 800; color: var(--g2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .inbox-count { background: var(--black); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 100px; }
 
-    .condition-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
+    .inbox-item { background: var(--white); border-radius: var(--rs); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+    .inbox-item-text { flex: 1; font-size: 14px; color: var(--black); line-height: 1.5; }
+    .inbox-item-time { font-size: 11px; color: var(--g3); margin-top: 3px; }
+    .triage-btn { padding: 7px 14px; background: var(--black); color: #fff; border: none; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; flex-shrink: 0; white-space: nowrap; }
 
-    @media (max-width: 480px) { .condition-grid { grid-template-columns: repeat(2, 1fr); } }
+    .inbox-done-item { background: var(--white); border-radius: var(--rs); padding: 12px 16px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; opacity: 0.5; }
+    .inbox-done-text { flex: 1; font-size: 13px; color: var(--black); text-decoration: line-through; }
+    .inbox-done-tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; background: var(--g4); color: var(--g2); font-weight: 700; flex-shrink: 0; }
+    .inbox-empty { background: var(--white); border-radius: var(--r); padding: 40px 24px; text-align: center; font-size: 13px; color: var(--g2); line-height: 1.7; }
 
-    .condition-btn {
-      padding: 10px 6px; border-radius: var(--radius-xs);
-      border: 1.5px solid #ebebeb; background: var(--white);
-      font-size: 11px; cursor: pointer;
-      transition: all 0.15s; color: #555;
-      text-align: center; font-family: inherit;
-      min-height: 72px;
-    }
+    /* ── 데일리 탭 ── */
+    .daily-card { background: var(--white); border-radius: var(--r); padding: 18px; margin-bottom: 16px; }
+    .daily-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .daily-title { font-size: 16px; font-weight: 800; }
+    .daily-date { font-size: 12px; color: var(--g2); }
+    .daily-field { margin-bottom: 18px; }
+    .daily-label { font-size: 10px; font-weight: 800; color: var(--g3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { padding: 7px 14px; border-radius: 100px; border: 1.5px solid var(--g4); background: var(--white); font-size: 12px; font-weight: 700; cursor: pointer; color: var(--g1); font-family: inherit; min-height: 38px; transition: all 0.15s; }
+    .chip.on { border-color: transparent; color: #fff; }
+    .chip-add { padding: 7px 12px; border-radius: 100px; border: 1.5px dashed var(--g3); background: none; font-size: 12px; font-weight: 700; color: var(--g2); cursor: pointer; font-family: inherit; min-height: 38px; }
+    .daily-input { width: 100%; border: 1.5px solid var(--g4); border-radius: 10px; padding: 12px 14px; font-size: 14px; font-family: inherit; outline: none; color: var(--black); background: var(--g5); min-height: 48px; }
+    .daily-input:focus { border-color: var(--black); background: var(--white); }
+    .toggle-wrap { display: flex; align-items: center; gap: 12px; }
+    .toggle { width: 46px; height: 26px; border-radius: 100px; background: var(--g4); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle.on { background: var(--black); }
+    .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.18); }
+    .toggle.on .toggle-thumb { left: 23px; }
+    .toggle-label { font-size: 13px; font-weight: 600; color: var(--g1); }
+    .save-btn { width: 100%; padding: 14px; background: var(--black); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 52px; }
+    .save-btn:active { opacity: 0.7; }
 
-    .condition-btn.active { border-color: transparent; color: #fff; }
-    .condition-btn .cond-emoji { font-size: 20px; display: block; margin-bottom: 5px; }
-    .condition-btn .cond-name { font-weight: 700; display: block; margin-bottom: 2px; font-size: 11px; }
-    .condition-btn .cond-time { font-size: 10px; opacity: 0.75; display: block; }
-
-    /* ── 칸반 ── */
-    .kanban-wrapper {
-      max-width: 1200px;
-      margin: 16px auto 0;
-      padding: 0 20px;
-    }
-
-    /* 데스크탑: 가로 스크롤 */
-    @media (min-width: 768px) {
-      .kanban-wrapper { overflow-x: auto; }
-      .tracks { display: flex; gap: 16px; align-items: flex-start; min-width: min-content; }
-      .track-card { width: 300px; flex-shrink: 0; }
-      .add-track-card { width: 300px; flex-shrink: 0; min-height: 180px; }
-    }
-
-    /* 모바일: 세로 스택 */
-    @media (max-width: 767px) {
-      .tracks { display: flex; flex-direction: column; gap: 12px; }
-      .track-card { width: 100%; }
-      .add-track-card { width: 100%; min-height: 80px; flex-direction: row; padding: 20px; }
-    }
-
-    .track-card {
-      background: var(--white);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      position: relative;
-      transition: box-shadow 0.2s;
-    }
-
-    .track-card.highlighted { outline: 2.5px solid var(--black); }
-
-    .track-header {
-      display: flex; align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 14px; gap: 8px;
-    }
-
-    .track-name-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-
-    .track-name {
-      font-size: 15px; font-weight: 800;
-      cursor: pointer; border-radius: 6px;
-      padding: 2px 4px; margin: -2px -4px;
-      transition: background 0.15s;
-    }
-
-    .track-name:hover { background: var(--bg); }
-
-    .track-name-input {
-      font-size: 15px; font-weight: 800;
-      border: none; border-bottom: 2px solid var(--black);
-      outline: none; background: transparent;
-      font-family: inherit; width: 100%; padding: 2px 0;
-    }
-
-    .track-menu-btn {
-      background: none; border: none;
-      font-size: 20px; color: var(--gray3);
-      cursor: pointer; padding: 4px 6px;
-      border-radius: 8px; line-height: 1;
-      flex-shrink: 0; min-width: 36px; min-height: 36px;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    .track-menu-btn:hover { color: var(--gray1); background: var(--bg); }
-
-    .track-badge {
-      font-size: 11px; padding: 4px 10px;
-      border-radius: 100px; font-weight: 700; flex-shrink: 0;
-    }
-
-    .badge-green { background: #e6f9f0; color: #1a9e5c; }
-    .badge-yellow { background: #fff8e1; color: #b07c00; }
-    .badge-red { background: #ffeaea; color: #cc3333; }
-
-    .section-label {
-      font-size: 10px; font-weight: 800; color: var(--gray2);
-      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
-    }
-
-    .goal-empty {
-      background: var(--gray5); border: 1.5px dashed var(--gray3);
-      border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px;
-      text-align: center; cursor: pointer; transition: all 0.15s;
-    }
-
-    .goal-empty:hover { border-color: #999; background: var(--bg); }
-    .goal-empty-text { font-size: 13px; color: var(--gray2); display: block; margin-bottom: 8px; }
-
-    .goal-find-btn {
-      font-size: 12px; font-weight: 700; color: var(--black);
-      background: var(--white); border: 1.5px solid var(--black);
-      border-radius: 100px; padding: 6px 14px; cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .goal-find-btn:hover { background: var(--black); color: #fff; }
-
-    .goal-text-display {
-      font-size: 13px; color: var(--black); line-height: 1.6;
-      padding: 10px 12px; background: var(--bg);
-      border-radius: var(--radius-xs); cursor: pointer;
-      position: relative; margin-bottom: 14px;
-    }
-
-    .pump-primer {
-      background: var(--bg); border-radius: var(--radius-sm);
-      padding: 14px; margin-bottom: 14px;
-    }
-
-    .pump-label {
-      font-size: 10px; font-weight: 800; color: var(--gray1);
-      margin-bottom: 8px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-
-
-    .pump-action-input {
-      width: 100%; border: none; border-bottom: 1.5px solid var(--gray3);
-      padding: 6px 0; font-size: 14px; color: var(--black);
-      font-weight: 600; outline: none; background: transparent; font-family: inherit;
-    }
-
-    .pump-action-input:focus { border-bottom-color: var(--black); }
-    .pump-hint { font-size: 11px; color: var(--gray2); margin-top: 6px; line-height: 1.5; }
-
-    .do-btn {
-      width: 100%; padding: 14px; background: var(--black); color: #fff;
-      border: none; border-radius: var(--radius-xs);
-      font-size: 14px; font-weight: 700; cursor: pointer;
-      transition: opacity 0.15s; font-family: inherit;
-      min-height: 48px;
-    }
-
-    .do-btn:active { opacity: 0.7; }
-
-    .recommend-tag {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 11px; background: var(--black); color: #fff;
-      padding: 4px 10px; border-radius: 100px; margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-
-    /* FAB - 트랙 추가 (모바일) */
-    .fab {
-      position: fixed;
-      bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
-      right: 20px;
-      width: 52px; height: 52px;
-      background: var(--black); color: #fff;
-      border: none; border-radius: 50%;
-      font-size: 24px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-      z-index: 80;
-      transition: transform 0.15s;
-    }
-
-    .fab:active { transform: scale(0.9); }
-
-    @media (min-width: 768px) { .fab { display: none; } }
-
-    /* 트랙 메뉴 */
-    .track-menu {
-      position: absolute; top: 52px; right: 20px;
-      background: var(--white); border: 1px solid #ebebeb;
-      border-radius: var(--radius-sm);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.14);
-      z-index: 50; min-width: 150px; overflow: hidden;
-    }
-
-    .track-menu-item {
-      padding: 14px 18px; font-size: 14px;
-      cursor: pointer; transition: background 0.1s; min-height: 48px;
-      display: flex; align-items: center;
-    }
-
-    .track-menu-item:hover { background: var(--bg); }
-    .track-menu-item.danger { color: #cc3333; }
-    .track-menu-item.danger:hover { background: #ffeaea; }
-
-    .add-track-card {
-      border: 2px dashed var(--gray3); border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 32px 24px; cursor: pointer;
-      transition: all 0.15s; color: var(--gray2);
-      background: transparent;
-    }
-
-    .add-track-card:hover { border-color: #999; color: #555; background: var(--white); }
-    .add-track-icon { font-size: 24px; }
-    .add-track-text { font-size: 14px; font-weight: 700; }
-
-    /* ── 마중물 로그 ── */
-    .activity-log { max-width: 1200px; margin: 24px auto 0; padding: 0 20px 24px; }
-
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .section-title { font-size: 15px; font-weight: 800; }
-
-    .text-btn {
-      font-size: 12px; color: var(--gray2); cursor: pointer;
-      background: none; border: none; font-family: inherit;
-    }
-
+    .daily-log-section { }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .section-head-title { font-size: 14px; font-weight: 800; }
+    .text-btn { background: none; border: none; font-size: 12px; color: var(--g3); cursor: pointer; font-family: inherit; }
     .text-btn:hover { color: #cc3333; }
+    .daily-rec-card { background: var(--white); border-radius: var(--rs); padding: 14px 16px; margin-bottom: 8px; }
+    .daily-rec-date { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 8px; }
+    .daily-rec-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .daily-rec-chip { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
+    .daily-rec-row { font-size: 12px; color: var(--g1); margin-bottom: 3px; }
+    .daily-rec-row span { font-weight: 700; color: var(--g2); margin-right: 6px; }
+    .daily-rec-edit { font-size: 11px; color: var(--g3); cursor: pointer; background: none; border: none; font-family: inherit; margin-top: 6px; }
+    .daily-empty { background: var(--white); border-radius: var(--r); padding: 40px; text-align: center; font-size: 13px; color: var(--g2); }
 
-    .log-empty {
-      background: var(--white); border-radius: var(--radius-md);
-      padding: 40px; text-align: center; font-size: 13px; color: var(--gray2);
-      line-height: 1.6;
-    }
+    /* ── 바텀 시트 (모달) ── */
+    .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .sheet-overlay.open { opacity: 1; pointer-events: all; }
+    .sheet { background: var(--white); border-radius: 20px 20px 0 0; padding: 0 20px calc(20px + var(--safe)); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+    .sheet-overlay.open .sheet { transform: translateY(0); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--g4); border-radius: 100px; margin: 14px auto 20px; }
+    .sheet-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .sheet-sub { font-size: 13px; color: var(--g2); margin-bottom: 20px; line-height: 1.5; }
 
-    .log-day-group { margin-bottom: 16px; }
+    .sheet-input { width: 100%; border: 1.5px solid var(--g4); border-radius: var(--rs); padding: 14px 16px; font-size: 16px; font-weight: 600; font-family: inherit; outline: none; color: var(--black); transition: border-color 0.15s; margin-bottom: 16px; background: var(--g5); }
+    .sheet-input:focus { border-color: var(--black); background: var(--white); }
+    .sheet-textarea { width: 100%; border: 1.5px solid var(--g4); border-radius: var(--rs); padding: 12px 14px; font-size: 14px; font-family: inherit; outline: none; color: var(--black); resize: none; background: var(--g5); margin-bottom: 16px; }
+    .sheet-textarea:focus { border-color: var(--black); background: var(--white); }
 
-    .log-day-label {
-      font-size: 11px; font-weight: 700; color: var(--gray2);
-      margin-bottom: 8px; padding-left: 4px;
-    }
-
-    .log-entries { display: flex; flex-direction: column; gap: 8px; }
-
-    .log-entry {
-      background: var(--white); border-radius: var(--radius-sm);
-      padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-    }
-
-    .log-cond-dot {
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
-    }
-
-    .log-body { flex: 1; min-width: 0; }
-    .log-track-name { font-size: 11px; font-weight: 700; color: var(--gray1); margin-bottom: 2px; }
-    .log-action { font-size: 13px; color: var(--black); font-weight: 600; }
-    .log-time { font-size: 11px; color: var(--gray2); flex-shrink: 0; }
-    .log-cond-tag { font-size: 10px; padding: 3px 8px; border-radius: 100px; font-weight: 700; flex-shrink: 0; }
-
-    @media (max-width: 480px) { .log-cond-tag { display: none; } }
-
-    /* ── 데일리 체크 탭 ── */
-    .daily-panel { max-width: 1200px; margin: 16px auto 24px; padding: 0 20px; }
-
-    .daily-today-card {
-      background: var(--white); border-radius: var(--radius-md);
-      padding: 20px; margin-bottom: 20px;
-    }
-
-    .daily-today-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .daily-today-title { font-size: 16px; font-weight: 800; }
-    .daily-today-date { font-size: 12px; color: var(--gray1); }
-
-    .daily-field { margin-bottom: 20px; }
-
-    .daily-field-label {
-      font-size: 10px; font-weight: 800; color: var(--gray2);
-      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
-    }
-
-    .state-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    .state-chip {
-      padding: 8px 14px; border-radius: 100px;
-      border: 1.5px solid #ebebeb; background: var(--white);
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: all 0.15s; color: #555; font-family: inherit;
-      min-height: 38px;
-    }
-
-    .state-chip.active { border-color: transparent; }
-
-    .duty-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-    .duty-chip {
-      display: flex; align-items: center; gap: 5px;
-      padding: 8px 14px; border-radius: 100px;
-      border: 1.5px solid #ebebeb; background: var(--white);
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: all 0.15s; color: #555; min-height: 38px;
-    }
-
-    .duty-chip.checked { background: var(--black); color: #fff; border-color: var(--black); }
-    .duty-chip-check { font-size: 12px; }
-
-    .duty-add-btn {
-      font-size: 12px; color: var(--gray2); cursor: pointer;
-      padding: 8px 12px; border: 1.5px dashed var(--gray3);
-      border-radius: 100px; background: none; font-family: inherit;
-      min-height: 38px;
-    }
-
-    .daily-input {
-      width: 100%; border: 1.5px solid #ebebeb; border-radius: var(--radius-xs);
-      padding: 12px 14px; font-size: 14px; font-family: inherit;
-      outline: none; color: var(--black); transition: border-color 0.15s; resize: none;
-      min-height: 48px;
-    }
-
-    .daily-input:focus { border-color: var(--black); }
-
-    .greyday-toggle { display: flex; align-items: center; gap: 12px; }
-
-    .toggle-track {
-      width: 48px; height: 28px; border-radius: 100px;
-      background: var(--gray3); cursor: pointer;
-      position: relative; transition: background 0.2s; flex-shrink: 0;
-    }
-
-    .toggle-track.on { background: var(--black); }
-
-    .toggle-thumb {
-      width: 22px; height: 22px; border-radius: 50%; background: #fff;
-      position: absolute; top: 3px; left: 3px;
-      transition: left 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-
-    .toggle-track.on .toggle-thumb { left: 23px; }
-    .greyday-label { font-size: 13px; color: #555; font-weight: 600; }
-
-    .daily-save-btn {
-      width: 100%; padding: 15px; background: var(--black); color: #fff;
-      border: none; border-radius: var(--radius-xs);
-      font-size: 15px; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: opacity 0.15s;
-      min-height: 52px;
-    }
-
-    .daily-save-btn:active { opacity: 0.7; }
-
-    /* 데일리 기록: 데스크탑=테이블, 모바일=카드 */
-    .daily-table-section { }
-
-    .daily-table-wrap {
-      background: var(--white); border-radius: var(--radius-md);
-      overflow: hidden; overflow-x: auto;
-    }
-
-    table { width: 100%; border-collapse: collapse; min-width: 700px; }
-
-    thead th {
-      padding: 12px 14px; font-size: 10px; font-weight: 800; color: var(--gray2);
-      text-transform: uppercase; letter-spacing: 0.5px;
-      background: #f9f9f7; text-align: left;
-      border-bottom: 1px solid var(--gray4); white-space: nowrap;
-    }
-
-    tbody tr { border-bottom: 1px solid var(--gray4); transition: background 0.1s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #fafaf8; }
-    tbody td { padding: 12px 14px; font-size: 12px; color: #333; vertical-align: top; }
-
-    .td-date { font-weight: 700; white-space: nowrap; color: var(--gray1); font-size: 11px; }
-    .td-states { display: flex; flex-wrap: wrap; gap: 4px; }
-    .td-state-tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; font-weight: 700; white-space: nowrap; }
-    .td-duties { display: flex; flex-wrap: wrap; gap: 4px; }
-    .td-duty-tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; background: var(--gray4); color: #555; white-space: nowrap; }
-    .td-greyday { text-align: center; }
-    .td-greyday-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; display: inline-block; }
-    .td-notes { color: var(--gray1); max-width: 160px; }
-    .td-emotion { color: #555; max-width: 120px; }
-    .td-eating { max-width: 150px; color: #555; }
-
-    .edit-row-btn {
-      font-size: 11px; color: var(--gray2); cursor: pointer;
-      background: none; border: none; font-family: inherit;
-      opacity: 0; padding: 4px 8px; min-height: 32px;
-    }
-
-    tbody tr:hover .edit-row-btn { opacity: 1; }
-    .edit-row-btn:hover { color: var(--black); }
-
-    /* 모바일 카드 뷰 (테이블 대신) */
-    .daily-cards { display: none; }
-
-    @media (max-width: 767px) {
-      .daily-table-wrap { display: none; }
-      .daily-cards { display: flex; flex-direction: column; gap: 10px; }
-    }
-
-    .daily-card {
-      background: var(--white); border-radius: var(--radius-sm); padding: 16px;
-    }
-
-    .daily-card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .daily-card-date { font-size: 12px; font-weight: 800; color: var(--gray1); }
-
-    .daily-card-greyday {
-      font-size: 10px; font-weight: 700; color: #555;
-      background: var(--gray4); padding: 3px 8px; border-radius: 100px;
-    }
-
-    .daily-card-states { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
-
-    .daily-card-row {
-      display: flex; gap: 8px; margin-bottom: 6px;
-      font-size: 12px; color: #555; align-items: flex-start;
-    }
-
-    .daily-card-row-label { font-weight: 700; color: var(--gray1); min-width: 36px; flex-shrink: 0; }
-
-    .daily-card-duties { display: flex; flex-wrap: wrap; gap: 4px; }
-
-    .daily-card-edit {
-      width: 100%; margin-top: 10px; padding: 8px;
-      background: var(--bg); border: none; border-radius: 8px;
-      font-size: 12px; font-weight: 600; color: var(--gray1);
-      cursor: pointer; font-family: inherit;
-    }
-
-    .daily-empty {
-      padding: 48px 24px; text-align: center;
-      font-size: 13px; color: var(--gray2); line-height: 1.7;
-    }
-
-    /* ── 모달 ── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex; align-items: flex-end; justify-content: center;
-      z-index: 100; padding: 0;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s;
-    }
-
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .modal {
-      background: var(--white);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      padding: 28px 24px calc(28px + var(--safe-bottom));
-      width: 100%; max-width: 520px;
-      max-height: 92vh; overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .modal-overlay.open .modal { transform: translateY(0); }
-
-    /* 모달 핸들 */
-    .modal-handle {
-      width: 36px; height: 4px; background: var(--gray3);
-      border-radius: 100px; margin: 0 auto 20px;
-    }
-
-    /* 데스크탑에서는 센터 모달 */
-    @media (min-width: 768px) {
-      .modal-overlay { align-items: center; padding: 24px; }
-      .modal {
-        border-radius: var(--radius-lg);
-        padding: 32px;
-        transform: translateY(16px);
-        max-height: 90vh;
-      }
-      .modal-overlay.open .modal { transform: translateY(0); }
-      .modal-handle { display: none; }
-    }
-
-    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-    .modal-sub { font-size: 13px; color: var(--gray1); margin-bottom: 24px; line-height: 1.6; }
-
-    .form-input {
-      width: 100%; border: 1.5px solid #ebebeb; border-radius: var(--radius-sm);
-      padding: 14px 16px; font-size: 15px; font-weight: 600;
-      font-family: inherit; outline: none; color: var(--black);
-      transition: border-color 0.15s; margin-bottom: 16px; min-height: 52px;
-    }
-
-    .form-input:focus { border-color: var(--black); }
-
-    .preset-label { font-size: 11px; font-weight: 700; color: var(--gray2); margin-bottom: 10px; }
-    .preset-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-
-    .preset-chip {
-      padding: 8px 14px; border: 1.5px solid #ebebeb;
-      border-radius: 100px; font-size: 12px; cursor: pointer;
-      color: #555; transition: all 0.15s; background: var(--white);
-      font-weight: 600; min-height: 38px;
-    }
-
+    .preset-label { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 8px; }
+    .preset-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .preset-chip { padding: 7px 14px; border: 1.5px solid var(--g4); border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--g1); background: var(--white); font-family: inherit; min-height: 36px; transition: all 0.15s; }
     .preset-chip:hover { border-color: var(--black); color: var(--black); }
 
-    .interview-step { display: none; }
-    .interview-step.active { display: block; }
-
-    .interview-q { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 6px; line-height: 1.5; }
-    .interview-hint { font-size: 12px; color: var(--gray2); margin-bottom: 12px; line-height: 1.5; }
-
-    .interview-input {
-      width: 100%; border: 1.5px solid #ebebeb; border-radius: var(--radius-sm);
-      padding: 12px 14px; font-size: 14px; font-family: inherit;
-      resize: none; outline: none; color: var(--black);
-      transition: border-color 0.15s; margin-bottom: 20px;
-    }
-
-    .interview-input:focus { border-color: var(--black); }
-
-    .progress-dots { display: flex; gap: 6px; margin-bottom: 20px; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray3); transition: background 0.2s; }
-    .dot.active { background: var(--black); }
-
-    .modal-btn-row { display: flex; gap: 10px; }
-
-    .btn-primary {
-      flex: 1; padding: 14px; background: var(--black); color: #fff;
-      border: none; border-radius: var(--radius-xs);
-      font-size: 14px; font-weight: 700; cursor: pointer;
-      font-family: inherit; min-height: 52px;
-    }
-
+    .btn-row { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-primary { flex: 1; padding: 14px; background: var(--black); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 52px; }
     .btn-primary:active { opacity: 0.7; }
+    .btn-secondary { padding: 14px 18px; background: var(--g5); color: var(--g1); border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 52px; }
+    .btn-danger { padding: 14px 18px; background: #fff0f0; color: #cc3333; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 52px; }
 
-    .btn-secondary {
-      padding: 14px 20px; background: var(--bg); color: #555;
-      border: none; border-radius: var(--radius-xs);
-      font-size: 14px; cursor: pointer; font-family: inherit;
-      font-weight: 600; min-height: 52px;
-    }
+    /* 트리아지 시트 */
+    .triage-item-text { background: var(--g5); border-radius: var(--rs); padding: 14px 16px; font-size: 15px; font-weight: 600; color: var(--black); line-height: 1.5; margin-bottom: 20px; }
+    .triage-section-label { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .triage-goal-list { margin-bottom: 16px; }
+    .triage-goal-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--rs); cursor: pointer; transition: background 0.1s; margin-bottom: 4px; }
+    .triage-goal-row:hover { background: var(--g5); }
+    .triage-goal-track { font-size: 10px; font-weight: 800; color: var(--g2); }
+    .triage-goal-name { font-size: 14px; font-weight: 700; color: var(--black); }
+    .triage-goal-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--g4); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .triage-goal-radio.selected { border-color: var(--black); background: var(--black); }
+    .triage-goal-radio.selected::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+    .triage-actions { display: flex; flex-direction: column; gap: 8px; }
+    .triage-action-btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: left; min-height: 50px; display: flex; align-items: center; gap: 10px; }
+    .ta-new { background: var(--g5); color: var(--black); }
+    .ta-later { background: var(--g5); color: var(--g1); }
+    .ta-out { background: #fff0f0; color: #cc3333; }
 
-    .goal-suggestion { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 16px; }
-    .suggestion-label { font-size: 10px; font-weight: 800; color: var(--gray1); margin-bottom: 6px; }
-    .suggestion-text { font-size: 14px; font-weight: 700; color: var(--black); line-height: 1.6; margin-bottom: 10px; }
-    .suggestion-edit { width: 100%; border: 1.5px solid #ebebeb; border-radius: var(--radius-xs); padding: 10px 12px; font-size: 14px; font-family: inherit; resize: none; outline: none; color: var(--black); }
-    .suggestion-edit:focus { border-color: var(--black); }
+    /* 목표 상세 시트 */
+    .goal-detail-track { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pump-q { font-size: 17px; font-weight: 800; color: var(--black); margin-bottom: 4px; line-height: 1.4; }
+    .pump-sub { font-size: 12px; color: var(--g2); margin-bottom: 16px; }
+    .pump-ex-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .pump-ex-chip { padding: 8px 14px; border-radius: 100px; border: 1.5px solid var(--g4); background: var(--white); font-size: 12px; font-weight: 700; cursor: pointer; color: var(--g1); font-family: inherit; min-height: 38px; transition: all 0.15s; }
+    .pump-ex-chip:hover { border-color: var(--black); color: var(--black); background: var(--g5); }
 
-    /* ── 마중물 시트 ── */
-    .pump-sheet-q {
-      font-size: 22px; font-weight: 800; color: var(--black);
-      line-height: 1.4; margin-bottom: 6px;
-    }
-    .pump-sheet-sub {
-      font-size: 13px; color: var(--gray1); margin-bottom: 24px;
-    }
-    .pump-sheet-input {
-      width: 100%; border: none; border-bottom: 2.5px solid var(--black);
-      padding: 10px 0; font-size: 18px; font-weight: 600;
-      font-family: inherit; outline: none; color: var(--black);
-      background: transparent; margin-bottom: 20px;
-    }
-    .pump-sheet-input::placeholder { color: var(--gray3); font-weight: 400; }
-    .pump-sheet-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
-    .pump-sheet-chip {
-      padding: 8px 16px; border-radius: 100px;
-      border: 1.5px solid #ebebeb; background: var(--white);
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      color: #555; transition: all 0.15s; font-family: inherit;
-      min-height: 40px;
-    }
-    .pump-sheet-chip:hover, .pump-sheet-chip:active { border-color: var(--black); color: var(--black); background: var(--bg); }
-
-    /* 카드 내 마중물 표시 */
-    .pump-display {
-      background: var(--bg); border-radius: var(--radius-sm);
-      padding: 14px 16px; margin-bottom: 14px;
-      cursor: pointer; transition: background 0.15s;
-    }
-    .pump-display:hover { background: #ececea; }
-    .pump-display-label { font-size: 10px; font-weight: 800; color: var(--gray2); margin-bottom: 6px; }
-    .pump-display-text { font-size: 15px; font-weight: 700; color: var(--black); line-height: 1.4; }
-    .pump-display-hint { font-size: 11px; color: var(--gray2); margin-top: 4px; }
-
-    .pump-empty {
-      border: 2px dashed var(--gray3); border-radius: var(--radius-sm);
-      padding: 18px 16px; margin-bottom: 14px;
-      cursor: pointer; transition: all 0.15s; text-align: center;
-    }
-    .pump-empty:hover { border-color: var(--black); background: var(--bg); }
-    .pump-empty-icon { font-size: 24px; margin-bottom: 6px; }
-    .pump-empty-text { font-size: 14px; font-weight: 700; color: var(--gray1); }
-    .pump-empty-sub { font-size: 12px; color: var(--gray2); margin-top: 3px; }
+    /* 로그 시트 */
+    .log-entry { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--g5); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .log-body { flex: 1; }
+    .log-track { font-size: 10px; font-weight: 800; color: var(--g2); }
+    .log-action { font-size: 13px; font-weight: 600; color: var(--black); }
+    .log-time { font-size: 11px; color: var(--g3); flex-shrink: 0; }
 
     /* ── 토스트 ── */
-    .toast {
-      position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
-      left: 50%; transform: translateX(-50%) translateY(80px);
-      background: var(--black); color: #fff;
-      padding: 12px 24px; border-radius: 100px;
-      font-size: 13px; font-weight: 600;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 999; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-
+    .toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe) + 12px); left: 50%; transform: translateX(-50%) translateY(70px); background: var(--black); color: #fff; padding: 11px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 999; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.2); pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .divider { height: 1px; background: var(--g4); margin: 16px 0; }
+    .mt8 { margin-top: 8px; }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <h1>내 트랙 OS</h1>
-    <p class="subtitle">병렬로 굴리되, 하나씩 마중물부터</p>
-  </div>
-  <button class="header-btn" onclick="openNewTrackModal()" id="desktopAddBtn">+ 트랙 추가</button>
-</header>
-
-<!-- 칸반 탭 -->
-<div class="tab-panel active" id="tab-kanban">
-  <div class="condition-bar">
-    <div class="condition-card">
-      <div class="condition-top">
-        <span class="condition-label">오늘 컨디션</span>
-        <div class="condition-selected" id="conditionSelected" style="display:none">
-          <span class="condition-selected-badge" id="conditionBadge"></span>
-          <div class="condition-energy-bar"><div class="condition-energy-fill" id="conditionEnergyFill"></div></div>
-          <span class="condition-change" onclick="clearCondition()">변경</span>
-        </div>
-      </div>
-      <div class="condition-strategy" id="conditionStrategy" style="display:none"></div>
-      <div class="condition-grid" id="conditionGrid"></div>
-    </div>
-  </div>
-
-  <div class="kanban-wrapper">
-    <div class="tracks" id="tracksContainer"></div>
-  </div>
-
-  <div class="activity-log">
-    <div class="section-header">
-      <span class="section-title">마중물 로그</span>
-      <button class="text-btn" onclick="clearActivityLog()">전체 삭제</button>
-    </div>
-    <div id="activityLogContainer"></div>
+<div class="top-bar">
+  <span class="logo">내 트랙 OS</span>
+  <div class="top-actions">
+    <button class="icon-btn" onclick="openSheet('logSheet')" title="활동 로그">📋</button>
   </div>
 </div>
 
-<!-- 데일리 체크 탭 -->
-<div class="tab-panel" id="tab-daily">
-  <div class="daily-panel">
-    <div class="daily-today-card">
-      <div class="daily-today-header">
-        <span class="daily-today-title">오늘 체크</span>
-        <span class="daily-today-date" id="dailyTodayDate"></span>
+<!-- ── 오늘 탭 ── -->
+<div class="panel active" id="panel-today">
+  <!-- 컨디션 -->
+  <div class="cond-card">
+    <div class="cond-row">
+      <span class="cond-title">오늘 컨디션</span>
+      <div class="cond-sel" id="condSel" style="display:none">
+        <span class="cond-badge" id="condBadge"></span>
+        <div class="cond-bar-wrap"><div class="cond-bar-fill" id="condFill"></div></div>
+        <span class="cond-change" onclick="clearCond()">변경</span>
       </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">오늘 상태 (복수 선택)</div>
-        <div class="state-chips" id="todayStateChips"></div>
-      </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">식습관</div>
-        <input class="daily-input" id="todayEating" type="text" placeholder="오늘 뭘 먹었는지, 특이사항 등" />
-      </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">오늘 한 의무</div>
-        <div class="duty-chips" id="todayDutyChips"></div>
-      </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">Grey Day</div>
-        <div class="greyday-toggle">
-          <div class="toggle-track" id="greydayToggle" onclick="toggleGreyday()">
-            <div class="toggle-thumb"></div>
-          </div>
-          <span class="greyday-label" id="greydayLabel">아님</span>
-        </div>
-      </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">비고</div>
-        <input class="daily-input" id="todayNotes" type="text" placeholder="특이사항, 메모" />
-      </div>
-
-      <div class="daily-field">
-        <div class="daily-field-label">감정</div>
-        <input class="daily-input" id="todayEmotion" type="text" placeholder="오늘의 감정 한 줄" />
-      </div>
-
-      <button class="daily-save-btn" onclick="saveDailyCheck()">오늘 저장</button>
     </div>
+    <div class="cond-strategy" id="condStrategy" style="display:none"></div>
+    <div class="cond-grid" id="condGrid"></div>
+  </div>
 
-    <div class="daily-table-section">
-      <div class="section-header">
-        <span class="section-title">기록</span>
-        <button class="text-btn" onclick="clearDailyLog()">전체 삭제</button>
-      </div>
+  <!-- 목표 카드들 -->
+  <div id="todayCards"></div>
+</div>
 
-      <!-- 데스크탑 테이블 -->
-      <div class="daily-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>날짜</th><th>상태</th><th>식습관</th>
-              <th>한 의무</th><th>Grey</th><th>비고</th><th>감정</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="dailyTableBody"></tbody>
-        </table>
-        <div class="daily-empty" id="dailyEmptyDesktop" style="display:none">아직 기록이 없어요. 오늘 체크부터 시작해봐요.</div>
-      </div>
+<!-- ── 트랙 탭 ── -->
+<div class="panel" id="panel-track">
+  <div id="trackList"></div>
+  <button class="add-track-btn" onclick="openAddTrack()">+ 새 트랙 추가</button>
+</div>
 
-      <!-- 모바일 카드 -->
-      <div class="daily-cards" id="dailyCardsContainer"></div>
-      <div class="daily-empty" id="dailyEmptyMobile" style="display:none">아직 기록이 없어요.</div>
+<!-- ── 인박스 탭 ── -->
+<div class="panel" id="panel-inbox">
+  <div class="capture-box">
+    <div class="capture-label">들어온 것 바로 받기</div>
+    <div class="capture-row">
+      <input class="capture-input" id="captureInput" type="text"
+        placeholder="지금 들어온 일, 요청, 아이디어..."
+        onkeydown="if(event.key==='Enter')addInbox()" />
+      <button class="capture-add" onclick="addInbox()">추가</button>
     </div>
+  </div>
+  <div id="inboxPendingSection"></div>
+  <div id="inboxDoneSection"></div>
+</div>
+
+<!-- ── 데일리 탭 ── -->
+<div class="panel" id="panel-daily">
+  <div class="daily-card">
+    <div class="daily-head">
+      <span class="daily-title">오늘 체크</span>
+      <span class="daily-date" id="dailyDate"></span>
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">오늘 상태</div>
+      <div class="chip-wrap" id="dailyStateChips"></div>
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">식습관</div>
+      <input class="daily-input" id="dailyEating" type="text" placeholder="오늘 뭘 먹었는지" />
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">한 의무</div>
+      <div class="chip-wrap" id="dailyDutyChips"></div>
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">Grey Day</div>
+      <div class="toggle-wrap">
+        <div class="toggle" id="greydayToggle" onclick="toggleGreyday()"><div class="toggle-thumb"></div></div>
+        <span class="toggle-label" id="greydayLabel">아님</span>
+      </div>
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">비고</div>
+      <input class="daily-input" id="dailyNotes" type="text" placeholder="특이사항" />
+    </div>
+    <div class="daily-field">
+      <div class="daily-label">감정</div>
+      <input class="daily-input" id="dailyEmotion" type="text" placeholder="오늘의 감정 한 줄" />
+    </div>
+    <button class="save-btn" id="dailySaveBtn" onclick="saveDailyCheck()">저장</button>
+  </div>
+
+  <div class="daily-log-section">
+    <div class="section-head">
+      <span class="section-head-title">기록</span>
+      <button class="text-btn" onclick="clearDailyLog()">전체 삭제</button>
+    </div>
+    <div id="dailyLogList"></div>
   </div>
 </div>
 
-<!-- FAB (모바일 트랙 추가) -->
-<button class="fab" onclick="openNewTrackModal()" id="fabBtn">+</button>
-
-<!-- 하단 탭바 -->
+<!-- ── 하단 탭바 ── -->
 <nav class="tab-bar">
-  <button class="tab-btn active" id="tabBtnKanban" onclick="switchTab('kanban',this)">
-    <span class="tab-icon">📋</span>
+  <button class="tab-btn active" onclick="switchTab('today',this)">
+    <span class="tab-icon">🎯</span>
+    <span class="tab-label">오늘</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('track',this)">
+    <span class="tab-icon">🗂</span>
     <span class="tab-label">트랙</span>
   </button>
-  <button class="tab-btn" id="tabBtnDaily" onclick="switchTab('daily',this)">
+  <button class="tab-btn" onclick="switchTab('inbox',this)">
+    <span class="tab-icon">📥</span>
+    <span class="tab-label">인박스</span>
+    <span class="inbox-badge" id="inboxBadge"></span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('daily',this)">
     <span class="tab-icon">📅</span>
     <span class="tab-label">데일리</span>
   </button>
 </nav>
 
-<!-- 새 트랙 모달 -->
-<div class="modal-overlay" id="newTrackModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">새 트랙 만들기</div>
-    <p class="modal-sub">어떤 영역을 굴리고 싶어요?</p>
-    <input class="form-input" id="newTrackName" type="text" placeholder="트랙 이름" maxlength="20"
-      onkeydown="if(event.key==='Enter')confirmNewTrack()" />
-    <div class="preset-label">추천 트랙</div>
+<!-- ── 시트들 ── -->
+
+<!-- 새 트랙 -->
+<div class="sheet-overlay" id="addTrackSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">새 트랙</div>
+    <div class="sheet-sub">어떤 분야를 굴릴 거예요?</div>
+    <input class="sheet-input" id="newTrackName" type="text" placeholder="트랙 이름" maxlength="20"
+      onkeydown="if(event.key==='Enter')confirmAddTrack()" />
+    <div class="preset-label">예시</div>
     <div class="preset-chips">
-      <button class="preset-chip" onclick="pickPreset('사이드 프로젝트')">사이드 프로젝트</button>
-      <button class="preset-chip" onclick="pickPreset('건강 / 운동')">건강 / 운동</button>
-      <button class="preset-chip" onclick="pickPreset('학습')">학습</button>
-      <button class="preset-chip" onclick="pickPreset('인간관계')">인간관계</button>
-      <button class="preset-chip" onclick="pickPreset('재정')">재정</button>
-      <button class="preset-chip" onclick="pickPreset('창작')">창작</button>
-      <button class="preset-chip" onclick="pickPreset('여행')">여행</button>
-      <button class="preset-chip" onclick="pickPreset('독서')">독서</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','커리어')">커리어</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','취준')">취준</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','사이드 프로젝트')">사이드 프로젝트</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','건강')">건강</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','학습')">학습</button>
+      <button class="preset-chip" onclick="setInput('newTrackName','창작')">창작</button>
     </div>
-    <div class="modal-btn-row">
-      <button class="btn-secondary" onclick="closeModal('newTrackModal')">취소</button>
-      <button class="btn-primary" onclick="confirmNewTrack()">만들기</button>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeSheet('addTrackSheet')">취소</button>
+      <button class="btn-primary" onclick="confirmAddTrack()">만들기</button>
     </div>
   </div>
 </div>
 
-<!-- 목표 발견 모달 -->
-<div class="modal-overlay" id="goalModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">목표 찾기</div>
-    <p class="modal-sub" id="goalModalSub"></p>
-    <div class="progress-dots" id="progressDots"></div>
-    <div class="interview-step" id="istep-0">
-      <div class="interview-q">6개월 뒤, 이 트랙에서 뭐가 달라지면 좋겠어요?</div>
-      <div class="interview-hint">잘 모르겠으면 "지금이 싫다"는 것부터 써도 돼요.</div>
-      <textarea class="interview-input" id="iAnswer-0" rows="3" placeholder="예: 취준이 정리되어 있으면 좋겠다..."></textarea>
-    </div>
-    <div class="interview-step" id="istep-1">
-      <div class="interview-q">지금 이 트랙에서 뭐가 제일 불편하거나 아쉬워요?</div>
-      <div class="interview-hint">뭔가 막히는 느낌 — 그게 뭔지요.</div>
-      <textarea class="interview-input" id="iAnswer-1" rows="3" placeholder="예: 뭘 준비해야 할지 모르겠다..."></textarea>
-    </div>
-    <div class="interview-step" id="istep-2">
-      <div class="interview-q">이 트랙에서 딱 하나만 이루면 된다면?</div>
-      <div class="interview-hint">거창하지 않아도 돼요.</div>
-      <textarea class="interview-input" id="iAnswer-2" rows="3" placeholder="예: 포트폴리오 하나 완성..."></textarea>
-    </div>
-    <div class="interview-step" id="istep-3">
-      <div class="interview-q">이런 목표는 어때요?</div>
-      <div class="interview-hint">직접 수정해도 돼요.</div>
-      <div class="goal-suggestion">
-        <div class="suggestion-label">제안 목표</div>
-        <div class="suggestion-text" id="suggestionText"></div>
-      </div>
-      <textarea class="suggestion-edit" id="finalGoalInput" rows="3" placeholder="마음에 안 들면 직접 써요"></textarea>
-    </div>
-    <div class="modal-btn-row">
-      <button class="btn-secondary" onclick="closeModal('goalModal')">닫기</button>
-      <button class="btn-primary" id="goalNextBtn" onclick="goalNext()">다음</button>
+<!-- 새 목표 -->
+<div class="sheet-overlay" id="addGoalSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">새 목표</div>
+    <div class="sheet-sub" id="addGoalTrackLabel"></div>
+    <input class="sheet-input" id="newGoalName" type="text" placeholder="이루고 싶은 것" maxlength="40"
+      onkeydown="if(event.key==='Enter')confirmAddGoal()" />
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeSheet('addGoalSheet')">취소</button>
+      <button class="btn-primary" onclick="confirmAddGoal()">추가</button>
     </div>
   </div>
 </div>
 
-<!-- 마중물 바텀시트 -->
-<div class="modal-overlay" id="pumpSheet">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="pump-sheet-q" id="pumpSheetQ"></div>
-    <div class="pump-sheet-sub">30초 안에 할 수 있는 것 하나만</div>
-    <input class="pump-sheet-input" id="pumpSheetInput" type="text"
+<!-- 목표 상세/마중물 -->
+<div class="sheet-overlay" id="goalSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="goal-detail-track" id="goalSheetTrack"></div>
+    <div class="sheet-title" id="goalSheetName"></div>
+    <div class="divider"></div>
+    <div class="pump-q" id="pumpQ"></div>
+    <div class="pump-sub">30초 안에 할 수 있는 것 하나만</div>
+    <input class="sheet-input" id="pumpInput" type="text"
       placeholder="직접 입력..."
-      onkeydown="if(event.key==='Enter')savePumpSheet()" />
-    <div class="pump-sheet-examples" id="pumpSheetExamples"></div>
-    <button class="btn-primary" onclick="savePumpSheet()">할게요</button>
+      onkeydown="if(event.key==='Enter')savePump()" />
+    <div class="pump-ex-wrap" id="pumpExamples"></div>
+    <div class="btn-row">
+      <button class="btn-danger" onclick="deleteGoalFromSheet()">삭제</button>
+      <button class="btn-primary" onclick="savePump()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 트리아지 -->
+<div class="sheet-overlay" id="triageSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">트리아지</div>
+    <div class="triage-item-text" id="triageItemText"></div>
+    <div class="triage-section-label">어느 목표에 연결할까요?</div>
+    <div class="triage-goal-list" id="triageGoalList"></div>
+    <div class="triage-actions">
+      <button class="triage-action-btn ta-new" onclick="triageAsNewGoal()">
+        <span>✨</span><span>새 목표로 만들기</span>
+      </button>
+      <button class="triage-action-btn ta-later" onclick="triageAsLater()">
+        <span>⏳</span><span>나중에 볼게요 (보류)</span>
+      </button>
+      <button class="triage-action-btn ta-out" onclick="triageAsOut()">
+        <span>🚫</span><span>내 scope 밖이에요</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 활동 로그 -->
+<div class="sheet-overlay" id="logSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">활동 로그</div>
+    <div class="sheet-sub">마중물을 완료한 기록이에요</div>
+    <div id="logList"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ── 상수 ──
 const CONDITIONS = [
-  {id:'great',  emoji:'🔥',name:'에너지 넘침',time:'4시간+',    energy:100,color:'#ff6b35',bg:'#fff3ee',strategy:'가장 중요하거나 오래 미뤄온 트랙부터 집중해요.',recommend:'important'},
-  {id:'good',   emoji:'😊',name:'좋음',       time:'2~3시간',  energy:75, color:'#1a9e5c',bg:'#e6f9f0',strategy:'평소대로 하면 돼요. 꾸준히 진행하기 좋은 상태예요.',recommend:'normal'},
-  {id:'meh',    emoji:'😐',name:'보통',       time:'1~2시간',  energy:55, color:'#b07c00',bg:'#fff8e1',strategy:'쉬운 것부터 시작해서 리듬을 타요.',recommend:'easy'},
-  {id:'tired',  emoji:'😓',name:'지침',       time:'1시간 미만',energy:35,color:'#888',   bg:'#f5f5f5',strategy:'마중물 하나만 해도 충분해요.',recommend:'easy'},
-  {id:'sick',   emoji:'🤒',name:'아픔',       time:'30분 미만',energy:15, color:'#cc3333',bg:'#ffeaea',strategy:'몸이 먼저예요. 오늘은 쉬어도 됩니다.',recommend:'skip'},
-  {id:'anxious',emoji:'😰',name:'불안함',     time:'1시간',    energy:40, color:'#7c3aed',bg:'#f3e8ff',strategy:'완료되는 느낌이 도움돼요. 명확한 행동부터.',recommend:'easy'},
-  {id:'sad',    emoji:'😔',name:'우울함',     time:'30분',     energy:20, color:'#2563eb',bg:'#eff6ff',strategy:'작은 행동 하나가 기분 전환이 될 수 있어요.',recommend:'easy'},
-  {id:'burnout',emoji:'😶',name:'번아웃',     time:'쉬는 날',  energy:5,  color:'#555',   bg:'#f0f0f0',strategy:'오늘은 쉬어도 돼요. 억지로 하면 더 오래 걸려요.',recommend:'skip'},
+  {id:'great',  e:'🔥',n:'에너지 넘침',t:'4시간+',    v:100,c:'#ff6b35',bg:'#fff3ee',s:'가장 중요하거나 오래 미뤄온 목표부터 집중해요.',r:'important'},
+  {id:'good',   e:'😊',n:'좋음',       t:'2~3시간',  v:75, c:'#1a9e5c',bg:'#e6f9f0',s:'평소대로 하면 돼요.',r:'normal'},
+  {id:'meh',    e:'😐',n:'보통',       t:'1~2시간',  v:55, c:'#b07c00',bg:'#fff8e1',s:'쉬운 것부터 시작해서 리듬을 타요.',r:'easy'},
+  {id:'tired',  e:'😓',n:'지침',       t:'1시간 미만',v:35, c:'#888',   bg:'#f5f5f5',s:'마중물 하나만 해도 충분해요.',r:'easy'},
+  {id:'sick',   e:'🤒',n:'아픔',       t:'30분 미만', v:15, c:'#cc3333',bg:'#ffeaea',s:'몸이 먼저예요. 오늘은 쉬어도 됩니다.',r:'skip'},
+  {id:'anxious',e:'😰',n:'불안함',     t:'1시간',     v:40, c:'#7c3aed',bg:'#f3e8ff',s:'완료되는 느낌이 도움돼요. 명확한 것부터.',r:'easy'},
+  {id:'sad',    e:'😔',n:'우울함',     t:'30분',      v:20, c:'#2563eb',bg:'#eff6ff',s:'작은 행동 하나가 기분 전환이 될 수 있어요.',r:'easy'},
+  {id:'burnout',e:'😶',n:'번아웃',     t:'쉬는 날',   v:5,  c:'#555',   bg:'#f0f0f0',s:'오늘은 쉬어도 돼요.',r:'skip'},
 ];
 const CMAP = Object.fromEntries(CONDITIONS.map(c=>[c.id,c]));
 
 const DAILY_STATES = [
-  {id:'sick',      label:'아플때',      color:'#cc3333',bg:'#ffeaea'},
-  {id:'exp_busy',  label:'예상한 바쁨', color:'#b07c00',bg:'#fff8e1'},
-  {id:'unexp_busy',label:'예상 못한 바쁨',color:'#ff6b35',bg:'#fff3ee'},
-  {id:'sad',       label:'우울할때',   color:'#2563eb',bg:'#eff6ff'},
-  {id:'happy',     label:'행복할때',   color:'#1a9e5c',bg:'#e6f9f0'},
-  {id:'anxious',   label:'불안할때',   color:'#7c3aed',bg:'#f3e8ff'},
-  {id:'tired',     label:'많이 지침',  color:'#888',   bg:'#f5f5f5'},
-  {id:'motivated', label:'동기부여됨', color:'#0891b2',bg:'#ecfeff'},
+  {id:'sick',      label:'아플때',      c:'#cc3333',bg:'#ffeaea'},
+  {id:'exp_busy',  label:'예상한 바쁨', c:'#b07c00',bg:'#fff8e1'},
+  {id:'unexp_busy',label:'예상 못한 바쁨',c:'#ff6b35',bg:'#fff3ee'},
+  {id:'sad',       label:'우울할때',    c:'#2563eb',bg:'#eff6ff'},
+  {id:'happy',     label:'행복할때',    c:'#1a9e5c',bg:'#e6f9f0'},
+  {id:'anxious',   label:'불안할때',    c:'#7c3aed',bg:'#f3e8ff'},
+  {id:'tired',     label:'많이 지침',   c:'#888',   bg:'#f5f5f5'},
+  {id:'motivated', label:'동기부여됨',  c:'#0891b2',bg:'#ecfeff'},
 ];
 const DSMAP = Object.fromEntries(DAILY_STATES.map(s=>[s.id,s]));
 
-const PRESETS = ['업무 / 커리어', '셀피쉬클럽', '취준'];
+const PUMP_EXAMPLES = {
+  '취준':   ['채용공고 하나 열기','자소서 파일 열기','회사 이름 검색하기'],
+  '커리어': ['관련 파일 열기','메모 한 줄 쓰기','담당자 메시지 열기'],
+  '업무':   ['오늘 할 일 하나 고르기','관련 파일 열기','메모 시작하기'],
+  '운동':   ['운동화 꺼내기','스트레칭 1분','운동 영상 켜기'],
+  '건강':   ['물 한 잔 마시기','스트레칭 1분','오늘 식사 메모'],
+  '학습':   ['노트 제목 쓰기','강의 1분 틀기','책 펼치기'],
+  '독서':   ['책 펼치기','1페이지만 읽기','책상 위에 책 꺼내두기'],
+  '창작':   ['빈 파일 열기','제목만 쓰기','레퍼런스 하나 찾기'],
+  '재정':   ['가계부 앱 열기','이번 달 지출 보기','잔액 확인하기'],
+  'default':['관련 탭 열기','메모 시작하기','타이머 1분 켜기'],
+};
 
-function makeTrack(name) {
-  return {id:'t'+Date.now()+'_'+Math.random().toString(36).slice(2,5), name, goal:'', steps:[], pumpAction:'', lastDone:null};
+function getPumpExamples(trackName, goalName='') {
+  const combined = trackName + goalName;
+  for (const [k,v] of Object.entries(PUMP_EXAMPLES)) {
+    if (k!=='default' && combined.includes(k)) return v;
+  }
+  return PUMP_EXAMPLES['default'];
 }
 
+// ── 상태 ──
+function makeId() { return '_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function makeTrack(name) { return {id:makeId(), name, goals:[]}; }
+function makeGoal(name) { return {id:makeId(), name, pumpAction:'', lastDone:null, status:'active'}; }
+function makeInboxItem(text) { return {id:makeId(), text, createdAt:new Date().toISOString(), status:'pending', linkedGoalId:null, decision:null}; }
+
 let state = loadState();
-let goalTrackId=null, goalStep=0;
-let openMenuId=null, editNameId=null;
-let todayStates=new Set(), todayDuties=new Set(), todayGreyday=false;
+let dailyStates = new Set(), dailyDuties = new Set(), dailyGreyday = false;
+let goalSheetId = null, triageItemId = null, triageSelectedGoalId = null;
+let addGoalTrackId = null;
 
 function loadState() {
-  try { const s=localStorage.getItem('trackOS_v6'); if(s) return JSON.parse(s); } catch(e){}
+  try {
+    const s = localStorage.getItem('trackOS_v7');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
   return {
-    tracks: PRESETS.map(makeTrack),
-    condition:null, conditionDate:null,
-    activityLog:[], dailyLog:[],
-    duties:['씻기','먹기','운동','집구하기','청소'],
+    tracks: [
+      {id:makeId(), name:'커리어', goals:[makeGoal('포트폴리오 완성')]},
+      {id:makeId(), name:'셀피쉬클럽', goals:[]},
+      {id:makeId(), name:'취준', goals:[]},
+    ],
+    inbox: [],
+    condition: null, conditionDate: null,
+    activityLog: [],
+    dailyLog: [],
+    duties: ['씻기','먹기','운동','집구하기','청소'],
   };
 }
 
-function save() { localStorage.setItem('trackOS_v6', JSON.stringify(state)); }
+function save() { localStorage.setItem('trackOS_v7', JSON.stringify(state)); }
 
 // ── 탭 ──
 function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
   btn.classList.add('active');
-  // FAB & 헤더 버튼 가시성
-  document.getElementById('fabBtn').style.display = tab==='kanban' ? '' : 'none';
-  if(tab==='daily') renderDailyTab();
+  if (tab==='daily') renderDailyTab();
+  if (tab==='inbox') renderInbox();
+  if (tab==='track') renderTrackTab();
+  if (tab==='today') renderToday();
 }
 
 // ── 컨디션 ──
-function setCondition(id) { state.condition=id; state.conditionDate=new Date().toISOString().slice(0,10); save(); renderKanban(); }
-function clearCondition() { state.condition=null; save(); renderKanban(); }
+function setCond(id) { state.condition=id; state.conditionDate=new Date().toISOString().slice(0,10); save(); renderCond(); renderToday(); }
+function clearCond() { state.condition=null; save(); renderCond(); renderToday(); }
 
-function renderCondition() {
-  const grid=document.getElementById('conditionGrid');
-  const sel=document.getElementById('conditionSelected');
-  const badge=document.getElementById('conditionBadge');
-  const fill=document.getElementById('conditionEnergyFill');
-  const strat=document.getElementById('conditionStrategy');
-  grid.innerHTML=CONDITIONS.map(c=>`
-    <button class="condition-btn ${state.condition===c.id?'active':''}"
-      style="${state.condition===c.id?`background:${c.color};`:''}"
-      onclick="setCondition('${c.id}')">
-      <span class="cond-emoji">${c.emoji}</span>
-      <span class="cond-name">${c.name}</span>
-      <span class="cond-time">${c.time}</span>
+function renderCond() {
+  const grid=document.getElementById('condGrid');
+  const sel=document.getElementById('condSel');
+  const badge=document.getElementById('condBadge');
+  const fill=document.getElementById('condFill');
+  const strat=document.getElementById('condStrategy');
+  grid.innerHTML = CONDITIONS.map(c=>`
+    <button class="cond-btn ${state.condition===c.id?'active':''}"
+      style="${state.condition===c.id?`background:${c.c};`:''}"
+      onclick="setCond('${c.id}')">
+      <span class="ce">${c.e}</span>
+      <span class="cn">${c.n}</span>
+      <span class="ct">${c.t}</span>
     </button>`).join('');
-  if(state.condition) {
+  if (state.condition) {
     const c=CMAP[state.condition];
     grid.style.display='none'; sel.style.display='flex';
-    badge.textContent=`${c.emoji} ${c.name} · ${c.time}`;
-    badge.style.cssText=`background:${c.bg};color:${c.color}`;
-    fill.style.cssText=`width:${c.energy}%;background:${c.color}`;
-    strat.textContent=c.strategy; strat.style.display='block';
+    badge.textContent=`${c.e} ${c.n}`;
+    badge.style.cssText=`background:${c.bg};color:${c.c}`;
+    fill.style.cssText=`width:${c.v}%;background:${c.c}`;
+    strat.textContent=c.s; strat.style.display='block';
   } else {
     grid.style.display='grid'; sel.style.display='none'; strat.style.display='none';
   }
 }
 
-// ── 칸반 ──
+// ── 오늘 탭 ──
+function allGoals() {
+  return state.tracks.flatMap(tr => tr.goals.map(g => ({...g, trackName:tr.name, trackId:tr.id})));
+}
+
+function getRecommendedGoalId() {
+  if (!state.condition) return null;
+  const c = CMAP[state.condition];
+  if (!c || c.r==='skip') return null;
+  const goals = allGoals().filter(g=>g.status==='active');
+  if (!goals.length) return null;
+  if (c.r==='important') return goals.reduce((a,b)=>(daysSince(a.lastDone)??999)>=(daysSince(b.lastDone)??999)?a:b).id;
+  return goals.reduce((a,b)=>(a.pumpAction||'').length<=(b.pumpAction||'').length?a:b).id;
+}
+
 function daysSince(iso) { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/86400000); }
-function getStatus(d) {
-  if(d===null) return {badge:'badge-red',label:'아직 시작 안 함'};
-  if(d===0)    return {badge:'badge-green',label:'오늘 건드림'};
-  if(d<=3)     return {badge:'badge-green',label:`${d}일 전`};
-  if(d<=7)     return {badge:'badge-yellow',label:`${d}일 전`};
-  return       {badge:'badge-red',label:`${d}일 전`};
-}
-function getRecommended(tracks,cid) {
-  if(!cid||!tracks.length) return null;
-  const c=CMAP[cid];
-  if(!c||c.recommend==='skip') return null;
-  if(c.recommend==='important') return tracks.reduce((a,b)=>(daysSince(a.lastDone)??999)>=(daysSince(b.lastDone)??999)?a:b).id;
-  return tracks.reduce((a,b)=>(a.pumpAction||'').length<=(b.pumpAction||'').length?a:b).id;
+
+function getStatusLabel(d) {
+  if(d===null) return {badge:'badge-red', label:'아직 시작 안 함'};
+  if(d===0)    return {badge:'badge-green', label:'오늘 건드림'};
+  if(d<=3)     return {badge:'badge-green', label:`${d}일 전`};
+  if(d<=7)     return {badge:'badge-yellow', label:`${d}일 전`};
+  return       {badge:'badge-red', label:`${d}일 전`};
 }
 
-// ── 마중물 시트 ──
-let pumpSheetTrackId = null;
+function renderToday() {
+  renderCond();
+  const recId = getRecommendedGoalId();
+  const goals = allGoals().filter(g=>g.status==='active');
+  const container = document.getElementById('todayCards');
 
-const PUMP_EXAMPLES = {
-  '취준':      ['채용공고 하나 열기', '자소서 파일 열기', '회사 이름 검색하기', '지원 리스트 열기'],
-  '커리어':    ['관련 파일 열기', '메모 한 줄 쓰기', '담당자 메시지 열기', '업무 목록 보기'],
-  '업무':      ['오늘 할 일 하나 고르기', '관련 파일 열기', '메모 시작하기', '슬랙 열기'],
-  '운동':      ['운동화 꺼내기', '스트레칭 1분', '운동 영상 켜기', '물 한 잔 마시기'],
-  '건강':      ['물 한 잔 마시기', '스트레칭 1분', '수면 기록 열기', '오늘 식사 메모'],
-  '학습':      ['노트 제목 쓰기', '강의 1분 틀기', '책 펼치기', '오늘 목표 한 줄'],
-  '독서':      ['책 펼치기', '어제 읽은 곳 찾기', '책상 위에 책 꺼내두기', '1페이지만 읽기'],
-  '창작':      ['빈 파일 열기', '제목만 쓰기', '레퍼런스 하나 찾기', '5분만 낙서하기'],
-  '재정':      ['가계부 앱 열기', '이번 달 지출 보기', '목표 금액 메모하기', '잔액 확인하기'],
-  '인간관계':  ['연락하고 싶은 사람 떠올리기', '메시지 창 열기', '지난 대화 보기'],
-  'default':   ['관련 탭 열기', '메모 시작하기', '타이머 1분 켜기', '검색창에 입력하기'],
-};
-
-function getExamples(trackName) {
-  const name = trackName || '';
-  for (const [key, examples] of Object.entries(PUMP_EXAMPLES)) {
-    if (key !== 'default' && name.includes(key)) return examples;
+  if (!goals.length) {
+    container.innerHTML = `
+      <div class="today-empty">
+        <div class="today-empty-icon">🗂</div>
+        <div class="today-empty-text">목표가 없어요</div>
+        <div class="today-empty-sub">트랙 탭에서 목표를 추가하거나<br/>인박스에 일단 던져두세요</div>
+      </div>`;
+    return;
   }
-  return PUMP_EXAMPLES['default'];
+
+  // 추천 먼저, 나머지는 마지막 활동 역순
+  const sorted = [...goals].sort((a,b)=>{
+    if(a.id===recId) return -1;
+    if(b.id===recId) return 1;
+    return (daysSince(a.lastDone)??999) - (daysSince(b.lastDone)??999);
+  });
+
+  container.innerHTML = sorted.map(g => {
+    const isRec = g.id === recId;
+    const d = daysSince(g.lastDone);
+    const st = getStatusLabel(d);
+    const pumpHtml = g.pumpAction
+      ? `<div class="pump-area" onclick="openGoalSheet('${g.id}')">
+           <div class="pump-area-label">💧 마중물</div>
+           <div class="pump-area-text">${g.pumpAction}</div>
+           <div class="pump-area-hint">탭해서 바꾸기</div>
+         </div>`
+      : `<div class="pump-area-empty" onclick="openGoalSheet('${g.id}')">
+           <div class="pump-area-empty-text">💧 지금 뭘 할 수 있어? 탭해서 설정하기</div>
+         </div>`;
+    const btnText = g.pumpAction
+      ? `✓ ${g.pumpAction.length>22?g.pumpAction.slice(0,22)+'…':g.pumpAction} 했어요`
+      : '마중물 설정 후 시작';
+    const lastDoneStr = g.lastDone
+      ? `마지막: ${new Date(g.lastDone).toLocaleDateString('ko-KR',{month:'long',day:'numeric'})} ${new Date(g.lastDone).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`
+      : '';
+    return `
+      <div class="goal-card ${isRec?'rec':''}">
+        ${isRec?'<div class="rec-tag">⚡ 오늘 여기부터</div>':''}
+        <div class="goal-card-track">${g.trackName}</div>
+        <div class="goal-card-name">${g.name}</div>
+        ${pumpHtml}
+        <button class="done-btn ${g.pumpAction?'':'empty'}" onclick="markDone('${g.id}')">${btnText}</button>
+        ${lastDoneStr?`<div class="last-done">${lastDoneStr}</div>`:''}
+      </div>`;
+  }).join('');
 }
 
-function openPumpSheet(trackId) {
-  pumpSheetTrackId = trackId;
-  const t = state.tracks.find(t=>t.id===trackId);
-  document.getElementById('pumpSheetQ').textContent = `지금 ${t.name}에서\n뭘 할 수 있어?`;
-  document.getElementById('pumpSheetInput').value = t.pumpAction || '';
-  const examples = getExamples(t.name);
-  document.getElementById('pumpSheetExamples').innerHTML = examples.map(ex =>
-    `<button class="pump-sheet-chip" onclick="pickPumpExample('${ex}')">${ex}</button>`
+function markDone(goalId) {
+  const result = findGoal(goalId);
+  if (!result) return;
+  const {goal, track} = result;
+  if (!goal.pumpAction) { toast('마중물을 먼저 설정해요 💧'); openGoalSheet(goalId); return; }
+  goal.lastDone = new Date().toISOString();
+  const c = state.condition ? CMAP[state.condition] : null;
+  if (!state.activityLog) state.activityLog=[];
+  state.activityLog.unshift({
+    id:makeId(), timestamp:new Date().toISOString(),
+    trackName:track.name, goalName:goal.name, action:goal.pumpAction,
+    conditionId:state.condition,
+    conditionEmoji:c?c.e:'—', conditionName:c?c.n:'—',
+    conditionColor:c?c.c:'#888', conditionBg:c?c.bg:'#f5f5f5',
+  });
+  if (state.activityLog.length>300) state.activityLog=state.activityLog.slice(0,300);
+  save();
+  toast(`${goal.name} — 완료! 🎉`);
+  renderToday();
+}
+
+function findGoal(goalId) {
+  for (const track of state.tracks) {
+    const goal = track.goals.find(g=>g.id===goalId);
+    if (goal) return {goal, track};
+  }
+  return null;
+}
+
+// ── 트랙 탭 ──
+function renderTrackTab() {
+  const container = document.getElementById('trackList');
+  container.innerHTML = state.tracks.map(tr => {
+    const goalRows = tr.goals.map(g => {
+      const d = daysSince(g.lastDone);
+      const st = getStatusLabel(d);
+      return `
+        <div class="goal-row" onclick="openGoalSheet('${g.id}')">
+          <div class="goal-row-info">
+            <div class="goal-row-name">${g.name}</div>
+            <div class="goal-row-pump">${g.pumpAction || '마중물 없음'}</div>
+          </div>
+          <span class="goal-row-badge ${st.badge}">${st.label}</span>
+          <span class="goal-row-arrow">›</span>
+        </div>`;
+    }).join('');
+    return `
+      <div class="track-section">
+        <div class="track-head">
+          <span class="track-head-name">${tr.name}</span>
+          <button class="track-head-btn" onclick="renameTrack('${tr.id}')" title="트랙 이름 수정">✏️</button>
+          <button class="track-head-btn" onclick="deleteTrack('${tr.id}')" title="트랙 삭제">🗑</button>
+        </div>
+        ${goalRows}
+        <button class="add-goal-btn" onclick="openAddGoal('${tr.id}')">+ 목표 추가</button>
+      </div>`;
+  }).join('');
+}
+
+function openAddTrack() { document.getElementById('newTrackName').value=''; openSheet('addTrackSheet'); setTimeout(()=>document.getElementById('newTrackName').focus(),300); }
+function confirmAddTrack() {
+  const n = document.getElementById('newTrackName').value.trim();
+  if (!n) return;
+  state.tracks.push(makeTrack(n)); save(); closeSheet('addTrackSheet'); renderTrackTab(); renderToday();
+  toast(`"${n}" 트랙 추가됨`);
+}
+
+function openAddGoal(trackId) {
+  addGoalTrackId = trackId;
+  const tr = state.tracks.find(t=>t.id===trackId);
+  document.getElementById('addGoalTrackLabel').textContent = `트랙: ${tr.name}`;
+  document.getElementById('newGoalName').value = '';
+  openSheet('addGoalSheet');
+  setTimeout(()=>document.getElementById('newGoalName').focus(),300);
+}
+
+function confirmAddGoal() {
+  const n = document.getElementById('newGoalName').value.trim();
+  if (!n) return;
+  const tr = state.tracks.find(t=>t.id===addGoalTrackId);
+  if (!tr) return;
+  tr.goals.push(makeGoal(n)); save(); closeSheet('addGoalSheet'); renderTrackTab(); renderToday();
+  toast(`"${n}" 목표 추가됨`);
+}
+
+function renameTrack(trackId) {
+  const tr = state.tracks.find(t=>t.id===trackId);
+  const n = prompt('트랙 이름:', tr.name);
+  if (n && n.trim()) { tr.name = n.trim(); save(); renderTrackTab(); renderToday(); }
+}
+
+function deleteTrack(trackId) {
+  const tr = state.tracks.find(t=>t.id===trackId);
+  if (!confirm(`"${tr.name}" 트랙과 목표를 모두 삭제할까요?`)) return;
+  state.tracks = state.tracks.filter(t=>t.id!==trackId);
+  save(); renderTrackTab(); renderToday();
+}
+
+// ── 목표 시트 ──
+function openGoalSheet(goalId) {
+  const result = findGoal(goalId);
+  if (!result) return;
+  const {goal, track} = result;
+  goalSheetId = goalId;
+  document.getElementById('goalSheetTrack').textContent = track.name;
+  document.getElementById('goalSheetName').textContent = goal.name;
+  document.getElementById('pumpQ').textContent = `지금 "${goal.name}"에서\n뭘 할 수 있어?`;
+  document.getElementById('pumpInput').value = goal.pumpAction || '';
+  const examples = getPumpExamples(track.name, goal.name);
+  document.getElementById('pumpExamples').innerHTML = examples.map(ex =>
+    `<button class="pump-ex-chip" onclick="document.getElementById('pumpInput').value='${ex}';document.getElementById('pumpInput').focus()">${ex}</button>`
   ).join('');
-  openModal('pumpSheet');
-  setTimeout(()=>document.getElementById('pumpSheetInput').focus(), 300);
+  openSheet('goalSheet');
+  setTimeout(()=>document.getElementById('pumpInput').focus(),300);
 }
 
-function pickPumpExample(text) {
-  document.getElementById('pumpSheetInput').value = text;
-  document.getElementById('pumpSheetInput').focus();
-}
-
-function savePumpSheet() {
-  const v = document.getElementById('pumpSheetInput').value.trim();
-  if (!v) { closeModal('pumpSheet'); return; }
-  const t = state.tracks.find(t=>t.id===pumpSheetTrackId);
-  if (t) { t.pumpAction = v; save(); }
-  closeModal('pumpSheet'); renderKanban();
+function savePump() {
+  const result = findGoal(goalSheetId);
+  if (!result) return;
+  result.goal.pumpAction = document.getElementById('pumpInput').value.trim();
+  save(); closeSheet('goalSheet'); renderToday(); renderTrackTab();
   toast('마중물 설정됐어요 💧');
 }
 
-function updatePump(id,v) { const t=state.tracks.find(t=>t.id===id); if(t){t.pumpAction=v;save();} }
-
-function markDone(id) {
-  const t=state.tracks.find(t=>t.id===id); if(!t) return;
-  t.lastDone=new Date().toISOString();
-  const c=state.condition?CMAP[state.condition]:null;
-  if(!state.activityLog) state.activityLog=[];
-  state.activityLog.unshift({
-    id:Date.now(), timestamp:new Date().toISOString(),
-    trackName:t.name, action:t.pumpAction||'마중물',
-    conditionId:state.condition,
-    conditionEmoji:c?c.emoji:'—', conditionName:c?c.name:'—',
-    conditionColor:c?c.color:'#888', conditionBg:c?c.bg:'#f5f5f5',
-  });
-  if(state.activityLog.length>200) state.activityLog=state.activityLog.slice(0,200);
-  save(); toast(`${t.name} — 마중물 완료! 🎉`); renderKanban();
+function deleteGoalFromSheet() {
+  const result = findGoal(goalSheetId);
+  if (!result) return;
+  if (!confirm(`"${result.goal.name}" 목표를 삭제할까요?`)) return;
+  result.track.goals = result.track.goals.filter(g=>g.id!==goalSheetId);
+  save(); closeSheet('goalSheet'); renderTrackTab(); renderToday();
+  toast('목표가 삭제됐어요');
 }
 
-function startEditName(id) { editNameId=id; closeMenu(); renderKanban(); setTimeout(()=>{const el=document.getElementById('ni-'+id);if(el){el.focus();el.select();}},50); }
-function finishEditName(id,v) { const t=state.tracks.find(t=>t.id===id); if(t&&v.trim()) t.name=v.trim(); editNameId=null; save(); renderKanban(); }
-function deleteTrack(id) { if(!confirm('이 트랙을 삭제할까요?')) return; state.tracks=state.tracks.filter(t=>t.id!==id); save(); closeMenu(); renderKanban(); }
-function toggleMenu(id,e) { e.stopPropagation(); openMenuId=openMenuId===id?null:id; renderKanban(); }
-function closeMenu() { openMenuId=null; }
-function clearActivityLog() { if(!confirm('마중물 로그를 삭제할까요?')) return; state.activityLog=[]; save(); renderKanban(); }
-
-function renderActivityLog() {
-  const el=document.getElementById('activityLogContainer');
-  const log=state.activityLog||[];
-  if(!log.length){el.innerHTML='<div class="log-empty">마중물을 완료하면 여기에 기록돼요.</div>';return;}
-  const grp={};
-  log.forEach(e=>{const d=e.timestamp.slice(0,10);if(!grp[d])grp[d]=[];grp[d].push(e);});
-  const td=new Date().toISOString().slice(0,10);
-  const yd=new Date(Date.now()-86400000).toISOString().slice(0,10);
-  el.innerHTML=Object.entries(grp).map(([day,entries])=>`
-    <div class="log-day-group">
-      <div class="log-day-label">${day===td?'오늘':day===yd?'어제':day}</div>
-      <div class="log-entries">
-        ${entries.map(e=>{
-          const time=new Date(e.timestamp).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' + new Date(e.timestamp).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-          return `<div class="log-entry">
-            <div class="log-cond-dot" style="background:${e.conditionBg||'#f5f5f5'}">${e.conditionEmoji||'—'}</div>
-            <div class="log-body">
-              <div class="log-track-name">${e.trackName}</div>
-              <div class="log-action">${e.action}</div>
-            </div>
-            <span class="log-cond-tag" style="background:${e.conditionBg||'#f5f5f5'};color:${e.conditionColor||'#888'}">${e.conditionName||'—'}</span>
-            <span class="log-time">${time}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`).join('');
+// ── 인박스 ──
+function addInbox() {
+  const input = document.getElementById('captureInput');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.inbox) state.inbox=[];
+  state.inbox.unshift(makeInboxItem(text));
+  input.value = '';
+  save(); renderInbox(); updateInboxBadge();
+  toast('받았어요 📥');
 }
 
-function renderKanban() {
-  renderCondition();
-  const rec=getRecommended(state.tracks,state.condition);
-  const c=document.getElementById('tracksContainer');
-  c.innerHTML=state.tracks.map(t=>{
-    const d=daysSince(t.lastDone), st=getStatus(d);
-    const isRec=rec===t.id, isEdit=editNameId===t.id, isMenu=openMenuId===t.id;
-    const nameHtml=isEdit
-      ?`<input class="track-name-input" id="ni-${t.id}" value="${t.name}"
-          onblur="finishEditName('${t.id}',this.value)"
-          onkeydown="if(event.key==='Enter')finishEditName('${t.id}',this.value);if(event.key==='Escape'){editNameId=null;renderKanban();}" />`
-      :`<span class="track-name" ondblclick="startEditName('${t.id}')">${t.name}</span>`;
-    const menuHtml=isMenu?`
-      <div class="track-menu">
-        <div class="track-menu-item" onclick="startEditName('${t.id}')">✏️ 이름 수정</div>
-        <div class="track-menu-item danger" onclick="deleteTrack('${t.id}')">🗑 트랙 삭제</div>
-      </div>`:'';
-    const goalHtml=t.goal
-      ?`<div class="section-label">목표</div><div class="goal-text-display" onclick="openGoalModal('${t.id}')">${t.goal}</div>`
-      :`<div class="goal-empty" onclick="openGoalModal('${t.id}')"><span class="goal-empty-text">아직 목표가 없어요</span><button class="goal-find-btn">목표 찾기</button></div>`;
-    const pumpHtml = t.pumpAction
-      ? `<div class="pump-display" onclick="openPumpSheet('${t.id}')">
-           <div class="pump-display-label">💧 마중물</div>
-           <div class="pump-display-text">${t.pumpAction}</div>
-           <div class="pump-display-hint">탭해서 바꾸기</div>
-         </div>`
-      : `<div class="pump-empty" onclick="openPumpSheet('${t.id}')">
-           <div class="pump-empty-icon">💧</div>
-           <div class="pump-empty-text">지금 뭘 할 수 있어?</div>
-           <div class="pump-empty-sub">탭해서 마중물 설정하기</div>
-         </div>`;
-    return `<div class="track-card ${isRec?'highlighted':''}">
-      ${isRec?'<span class="recommend-tag">⚡ 오늘 여기부터</span>':''}
-      <div class="track-header">
-        <div class="track-name-wrap">${nameHtml}</div>
-        <span class="track-badge ${st.badge}">${st.label}</span>
-        <button class="track-menu-btn" onclick="toggleMenu('${t.id}',event)">⋯</button>
+function updateInboxBadge() {
+  const pending = (state.inbox||[]).filter(i=>i.status==='pending').length;
+  const badge = document.getElementById('inboxBadge');
+  if (pending > 0) { badge.textContent = pending > 9 ? '9+' : pending; badge.classList.add('show'); }
+  else { badge.classList.remove('show'); }
+}
+
+function renderInbox() {
+  updateInboxBadge();
+  const inbox = state.inbox || [];
+  const pending = inbox.filter(i=>i.status==='pending');
+  const done = inbox.filter(i=>i.status!=='pending');
+
+  const pendingSection = document.getElementById('inboxPendingSection');
+  if (!pending.length) {
+    pendingSection.innerHTML = `<div class="inbox-empty">📭 지금 대기 중인 항목이 없어요.<br/>위에서 들어오는 일을 바로 던져두세요.</div>`;
+  } else {
+    pendingSection.innerHTML = `
+      <div class="inbox-section-title">
+        대기 중 <span class="inbox-count">${pending.length}</span>
       </div>
-      ${menuHtml}${goalHtml}
-      ${pumpHtml}
-      <button class="do-btn" onclick="markDone('${t.id}')">${t.pumpAction ? `✓ ${t.pumpAction.length > 18 ? t.pumpAction.slice(0,18)+'...' : t.pumpAction} 했어요` : '마중물 설정 후 시작'}</button>
+      ${pending.map(item=>{
+        const time = new Date(item.createdAt).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' +
+                     new Date(item.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="inbox-item">
+          <div class="inbox-item-body">
+            <div class="inbox-item-text">${item.text}</div>
+            <div class="inbox-item-time">${time}</div>
+          </div>
+          <button class="triage-btn" onclick="openTriage('${item.id}')">트리아지 →</button>
+        </div>`;
+      }).join('')}`;
+  }
+
+  const doneSection = document.getElementById('inboxDoneSection');
+  if (!done.length) { doneSection.innerHTML=''; return; }
+  const decisionLabel = {linked:'목표 연결됨', new_goal:'새 목표 생성', later:'보류', out:'scope 밖'};
+  doneSection.innerHTML = `
+    <div class="inbox-section-title" style="margin-top:16px">처리됨</div>
+    ${done.slice(0,10).map(item=>`
+      <div class="inbox-done-item">
+        <div class="inbox-done-text">${item.text}</div>
+        <span class="inbox-done-tag">${decisionLabel[item.status]||item.status}</span>
+      </div>`).join('')}
+    <button class="text-btn mt8" onclick="clearDoneInbox()">처리된 항목 지우기</button>`;
+}
+
+function clearDoneInbox() {
+  state.inbox = (state.inbox||[]).filter(i=>i.status==='pending');
+  save(); renderInbox();
+}
+
+// ── 트리아지 ──
+function openTriage(itemId) {
+  triageItemId = itemId;
+  triageSelectedGoalId = null;
+  const item = (state.inbox||[]).find(i=>i.id===itemId);
+  if (!item) return;
+  document.getElementById('triageItemText').textContent = item.text;
+
+  const goals = allGoals().filter(g=>g.status==='active');
+  document.getElementById('triageGoalList').innerHTML = goals.length === 0
+    ? '<div style="font-size:13px;color:var(--g2);padding:8px 0;">아직 목표가 없어요. 새 목표로 만들거나 트랙 탭에서 먼저 추가해요.</div>'
+    : goals.map(g=>`
+        <div class="triage-goal-row" onclick="selectTriageGoal('${g.id}',this)">
+          <div class="triage-goal-radio" id="tr-radio-${g.id}"></div>
+          <div>
+            <div class="triage-goal-track">${g.trackName}</div>
+            <div class="triage-goal-name">${g.name}</div>
+          </div>
+        </div>`).join('');
+
+  openSheet('triageSheet');
+}
+
+function selectTriageGoal(goalId, el) {
+  triageSelectedGoalId = goalId;
+  document.querySelectorAll('.triage-goal-radio').forEach(r=>r.classList.remove('selected'));
+  document.getElementById('tr-radio-'+goalId).classList.add('selected');
+  // 바로 연결
+  setTimeout(()=>applyTriageLinkGoal(), 200);
+}
+
+function applyTriageLinkGoal() {
+  if (!triageSelectedGoalId) return;
+  const item = (state.inbox||[]).find(i=>i.id===triageItemId);
+  if (!item) return;
+  item.status = 'linked';
+  item.linkedGoalId = triageSelectedGoalId;
+  // 해당 목표의 마중물이 없으면 이 텍스트를 마중물 후보로 제안
+  const result = findGoal(triageSelectedGoalId);
+  if (result && !result.goal.pumpAction) {
+    result.goal.pumpAction = item.text.length > 30 ? item.text.slice(0,30)+'…' : item.text;
+  }
+  save(); closeSheet('triageSheet'); renderInbox(); renderToday();
+  const gName = result ? result.goal.name : '';
+  toast(`"${gName}"에 연결됐어요 ✓`);
+}
+
+function triageAsNewGoal() {
+  const item = (state.inbox||[]).find(i=>i.id===triageItemId);
+  if (!item) return;
+  closeSheet('triageSheet');
+  // 어느 트랙에 넣을지 선택
+  if (!state.tracks.length) { toast('먼저 트랙을 만들어요'); return; }
+  const trackNames = state.tracks.map(t=>t.name);
+  const chosen = state.tracks.length===1
+    ? state.tracks[0]
+    : (() => {
+        const idx = state.tracks.findIndex(t=>t.name);
+        // simple: ask via prompt
+        const n = prompt(`어느 트랙에 넣을까요?\n${state.tracks.map((t,i)=>`${i+1}. ${t.name}`).join('\n')}\n\n번호 입력:`);
+        const num = parseInt(n)-1;
+        return state.tracks[num] || state.tracks[0];
+      })();
+  const newGoal = makeGoal(item.text.length>40?item.text.slice(0,40)+'…':item.text);
+  chosen.goals.push(newGoal);
+  item.status = 'new_goal';
+  item.linkedGoalId = newGoal.id;
+  save(); renderInbox(); renderTrackTab(); renderToday();
+  toast(`"${chosen.name}"에 새 목표 추가됨 ✨`);
+}
+
+function triageAsLater() {
+  const item = (state.inbox||[]).find(i=>i.id===triageItemId);
+  if (item) { item.status='later'; save(); }
+  closeSheet('triageSheet'); renderInbox();
+  toast('보류됐어요 ⏳');
+}
+
+function triageAsOut() {
+  const item = (state.inbox||[]).find(i=>i.id===triageItemId);
+  if (item) { item.status='out'; save(); }
+  closeSheet('triageSheet'); renderInbox();
+  toast('scope 밖으로 처리했어요 🚫');
+}
+
+// ── 활동 로그 ──
+function renderLogSheet() {
+  const log = state.activityLog||[];
+  const list = document.getElementById('logList');
+  if (!log.length) { list.innerHTML='<div style="font-size:13px;color:var(--g2);padding:20px 0;text-align:center">아직 기록이 없어요.</div>'; return; }
+  list.innerHTML = log.slice(0,50).map(e=>{
+    const time = new Date(e.timestamp).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' +
+                 new Date(e.timestamp).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="log-entry">
+      <div class="log-dot" style="background:${e.conditionBg||'#f5f5f5'}">${e.conditionEmoji||'—'}</div>
+      <div class="log-body">
+        <div class="log-track">${e.trackName} › ${e.goalName||''}</div>
+        <div class="log-action">${e.action}</div>
+      </div>
+      <div class="log-time">${time}</div>
     </div>`;
-  }).join('')+`
-    <div class="add-track-card" onclick="openNewTrackModal()">
-      <span class="add-track-icon">+</span>
-      <span class="add-track-text">트랙 추가</span>
-    </div>`;
-  renderActivityLog();
+  }).join('');
 }
 
 // ── 데일리 체크 ──
 function renderDailyTab() {
-  const now=new Date();
-  document.getElementById('dailyTodayDate').textContent=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-  const tk=now.toISOString().slice(0,10);
-  const ex=(state.dailyLog||[]).find(e=>e.date===tk);
-  if(ex) {
-    todayStates=new Set(ex.states||[]); todayDuties=new Set(ex.duties||[]); todayGreyday=ex.greyday||false;
-    document.getElementById('todayEating').value=ex.eating||'';
-    document.getElementById('todayNotes').value=ex.notes||'';
-    document.getElementById('todayEmotion').value=ex.emotion||'';
+  const now = new Date();
+  document.getElementById('dailyDate').textContent = now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  const todayKey = now.toISOString().slice(0,10);
+  const ex = (state.dailyLog||[]).find(e=>e.date===todayKey);
+  if (ex) {
+    dailyStates=new Set(ex.states||[]); dailyDuties=new Set(ex.duties||[]); dailyGreyday=ex.greyday||false;
+    document.getElementById('dailyEating').value=ex.eating||'';
+    document.getElementById('dailyNotes').value=ex.notes||'';
+    document.getElementById('dailyEmotion').value=ex.emotion||'';
   } else {
-    todayStates=new Set(); todayDuties=new Set(); todayGreyday=false;
-    ['todayEating','todayNotes','todayEmotion'].forEach(id=>document.getElementById(id).value='');
+    dailyStates=new Set(); dailyDuties=new Set(); dailyGreyday=false;
+    ['dailyEating','dailyNotes','dailyEmotion'].forEach(id=>document.getElementById(id).value='');
   }
-  renderDailyStateChips(); renderDailyDutyChips(); renderGreydayToggle(); renderDailyTable();
+  renderDailyStateChips(); renderDailyDutyChips(); renderGreydayToggle(); renderDailyLog();
 }
 
 function renderDailyStateChips() {
-  document.getElementById('todayStateChips').innerHTML=DAILY_STATES.map(s=>`
-    <button class="state-chip ${todayStates.has(s.id)?'active':''}"
-      style="${todayStates.has(s.id)?`background:${s.color};border-color:${s.color};color:#fff`:''}"
-      onclick="toggleTodayState('${s.id}')">${s.label}</button>`).join('');
+  document.getElementById('dailyStateChips').innerHTML = DAILY_STATES.map(s=>`
+    <button class="chip ${dailyStates.has(s.id)?'on':''}"
+      style="${dailyStates.has(s.id)?`background:${s.c};border-color:${s.c};`:''}"
+      onclick="toggleDailyState('${s.id}')">${s.label}</button>`).join('');
 }
-
-function toggleTodayState(id) { todayStates.has(id)?todayStates.delete(id):todayStates.add(id); renderDailyStateChips(); }
+function toggleDailyState(id) { dailyStates.has(id)?dailyStates.delete(id):dailyStates.add(id); renderDailyStateChips(); }
 
 function renderDailyDutyChips() {
-  document.getElementById('todayDutyChips').innerHTML=
+  document.getElementById('dailyDutyChips').innerHTML =
     (state.duties||[]).map(d=>`
-      <div class="duty-chip ${todayDuties.has(d)?'checked':''}" onclick="toggleTodayDuty('${d}')">
-        <span class="duty-chip-check">${todayDuties.has(d)?'✓':''}</span>${d}
-      </div>`).join('')
-    +`<button class="duty-add-btn" onclick="addDutyItem()">+ 추가</button>`;
+      <div class="chip ${dailyDuties.has(d)?'on':''}" onclick="toggleDailyDuty('${d}')" style="${dailyDuties.has(d)?'background:var(--black);border-color:var(--black);color:#fff;':''}">${dailyDuties.has(d)?'✓ ':''} ${d}</div>`).join('')
+    + `<button class="chip-add" onclick="addDuty()">+ 추가</button>`;
 }
+function toggleDailyDuty(d) { dailyDuties.has(d)?dailyDuties.delete(d):dailyDuties.add(d); renderDailyDutyChips(); }
+function addDuty() { const n=prompt('의무 항목:'); if(n&&n.trim()&&!state.duties.includes(n.trim())){state.duties.push(n.trim());save();} renderDailyDutyChips(); }
 
-function toggleTodayDuty(d) { todayDuties.has(d)?todayDuties.delete(d):todayDuties.add(d); renderDailyDutyChips(); }
-
-function addDutyItem() {
-  const n=prompt('의무 항목:'); if(!n||!n.trim()) return;
-  if(!state.duties.includes(n.trim())) { state.duties.push(n.trim()); save(); }
-  renderDailyDutyChips();
-}
-
-function toggleGreyday() { todayGreyday=!todayGreyday; renderGreydayToggle(); }
+function toggleGreyday() { dailyGreyday=!dailyGreyday; renderGreydayToggle(); }
 function renderGreydayToggle() {
-  document.getElementById('greydayToggle').classList.toggle('on',todayGreyday);
-  document.getElementById('greydayLabel').textContent=todayGreyday?'Grey Day':'아님';
+  document.getElementById('greydayToggle').classList.toggle('on',dailyGreyday);
+  document.getElementById('greydayLabel').textContent=dailyGreyday?'Grey Day':'아님';
 }
 
 function saveDailyCheck() {
-  if(!state.dailyLog) state.dailyLog=[];
-  const tk=new Date().toISOString().slice(0,10);
-  const entry={
-    date:tk, states:[...todayStates],
-    eating:document.getElementById('todayEating').value.trim(),
-    duties:[...todayDuties], greyday:todayGreyday,
-    notes:document.getElementById('todayNotes').value.trim(),
-    emotion:document.getElementById('todayEmotion').value.trim(),
-  };
-  const i=state.dailyLog.findIndex(e=>e.date===tk);
+  if (!state.dailyLog) state.dailyLog=[];
+  const todayKey=new Date().toISOString().slice(0,10);
+  const entry={date:todayKey,states:[...dailyStates],eating:document.getElementById('dailyEating').value.trim(),duties:[...dailyDuties],greyday:dailyGreyday,notes:document.getElementById('dailyNotes').value.trim(),emotion:document.getElementById('dailyEmotion').value.trim()};
+  const i=state.dailyLog.findIndex(e=>e.date===todayKey);
   if(i>=0) state.dailyLog[i]=entry; else state.dailyLog.unshift(entry);
   state.dailyLog.sort((a,b)=>b.date.localeCompare(a.date));
-  save(); renderDailyTable(); toast('오늘 체크 저장됐어요 ✓');
+  save(); renderDailyLog(); toast('저장됐어요 ✓');
 }
 
-function clearDailyLog() { if(!confirm('데일리 로그를 삭제할까요?')) return; state.dailyLog=[]; save(); renderDailyTable(); }
+function clearDailyLog() { if(!confirm('데일리 로그를 삭제할까요?')) return; state.dailyLog=[]; save(); renderDailyLog(); }
 
-function renderDailyTable() {
+function renderDailyLog() {
   const log=state.dailyLog||[];
-  const tbody=document.getElementById('dailyTableBody');
-  const cards=document.getElementById('dailyCardsContainer');
-  const empD=document.getElementById('dailyEmptyDesktop');
-  const empM=document.getElementById('dailyEmptyMobile');
-  if(!log.length) {
-    tbody.innerHTML=''; cards.innerHTML='';
-    empD.style.display='block'; empM.style.display='block'; return;
-  }
-  empD.style.display='none'; empM.style.display='none';
-  const tk=new Date().toISOString().slice(0,10);
-  const yk=new Date(Date.now()-86400000).toISOString().slice(0,10);
-  const label=d=>{
-    if(d===tk) return '오늘';
-    if(d===yk) return '어제';
-    const dt=new Date(d+'T00:00:00');
-    return dt.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-  };
-
-  // 테이블
-  tbody.innerHTML=log.map(e=>{
-    const stH=(e.states||[]).map(id=>{const s=DSMAP[id];return s?`<span class="td-state-tag" style="background:${s.bg};color:${s.color}">${s.label}</span>`:''}).join('');
-    const duH=(e.duties||[]).map(d=>`<span class="td-duty-tag">${d}</span>`).join('');
-    return `<tr>
-      <td class="td-date">${label(e.date)}</td>
-      <td><div class="td-states">${stH||'—'}</div></td>
-      <td class="td-eating">${e.eating||'—'}</td>
-      <td><div class="td-duties">${duH||'—'}</div></td>
-      <td class="td-greyday">${e.greyday?'<span class="td-greyday-dot"></span>':'—'}</td>
-      <td class="td-notes">${e.notes||'—'}</td>
-      <td class="td-emotion">${e.emotion||'—'}</td>
-      <td><button class="edit-row-btn" onclick="editDailyRow('${e.date}')">수정</button></td>
-    </tr>`;
-  }).join('');
-
-  // 모바일 카드
-  cards.innerHTML=log.map(e=>{
-    const stH=(e.states||[]).map(id=>{const s=DSMAP[id];return s?`<span class="td-state-tag" style="background:${s.bg};color:${s.color}">${s.label}</span>`:''}).join('');
-    const duH=(e.duties||[]).map(d=>`<span class="td-duty-tag">${d}</span>`).join('');
-    return `<div class="daily-card">
-      <div class="daily-card-header">
-        <span class="daily-card-date">${label(e.date)}</span>
-        ${e.greyday?'<span class="daily-card-greyday">Grey Day</span>':''}
-      </div>
-      ${stH?`<div class="daily-card-states">${stH}</div>`:''}
-      ${e.eating?`<div class="daily-card-row"><span class="daily-card-row-label">식습관</span><span>${e.eating}</span></div>`:''}
-      ${(e.duties||[]).length?`<div class="daily-card-row"><span class="daily-card-row-label">의무</span><div class="daily-card-duties">${duH}</div></div>`:''}
-      ${e.notes?`<div class="daily-card-row"><span class="daily-card-row-label">비고</span><span>${e.notes}</span></div>`:''}
-      ${e.emotion?`<div class="daily-card-row"><span class="daily-card-row-label">감정</span><span>${e.emotion}</span></div>`:''}
-      <button class="daily-card-edit" onclick="editDailyRow('${e.date}')">수정하기</button>
+  const container=document.getElementById('dailyLogList');
+  if(!log.length){container.innerHTML='<div class="daily-empty">아직 기록이 없어요.</div>';return;}
+  const td=new Date().toISOString().slice(0,10);
+  const yd=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const label=d=>d===td?'오늘':d===yd?'어제':new Date(d+'T00:00:00').toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+  container.innerHTML=log.map(e=>{
+    const stChips=(e.states||[]).map(sid=>{const s=DSMAP[sid];return s?`<span class="daily-rec-chip" style="background:${s.bg};color:${s.c}">${s.label}</span>`:''}).join('');
+    return `<div class="daily-rec-card">
+      <div class="daily-rec-date">${label(e.date)}</div>
+      ${stChips?`<div class="daily-rec-chips">${stChips}</div>`:''}
+      ${e.eating?`<div class="daily-rec-row"><span>식습관</span>${e.eating}</div>`:''}
+      ${(e.duties||[]).length?`<div class="daily-rec-row"><span>의무</span>${e.duties.join(', ')}</div>`:''}
+      ${e.notes?`<div class="daily-rec-row"><span>비고</span>${e.notes}</div>`:''}
+      ${e.emotion?`<div class="daily-rec-row"><span>감정</span>${e.emotion}</div>`:''}
+      ${e.greyday?`<div class="daily-rec-row" style="color:#555">Grey Day</div>`:''}
     </div>`;
   }).join('');
 }
 
-function editDailyRow(date) {
-  const entry=(state.dailyLog||[]).find(e=>e.date===date); if(!entry) return;
-  todayStates=new Set(entry.states||[]); todayDuties=new Set(entry.duties||[]); todayGreyday=entry.greyday||false;
-  document.getElementById('todayEating').value=entry.eating||'';
-  document.getElementById('todayNotes').value=entry.notes||'';
-  document.getElementById('todayEmotion').value=entry.emotion||'';
-  renderDailyStateChips(); renderDailyDutyChips(); renderGreydayToggle();
-  document.getElementById('dailyTodayDate').textContent=`${date} 수정 중`;
-  document.querySelector('.daily-save-btn').onclick=()=>{
-    const up={date,states:[...todayStates],eating:document.getElementById('todayEating').value.trim(),
-      duties:[...todayDuties],greyday:todayGreyday,notes:document.getElementById('todayNotes').value.trim(),emotion:document.getElementById('todayEmotion').value.trim()};
-    const i=state.dailyLog.findIndex(e=>e.date===date); if(i>=0) state.dailyLog[i]=up;
-    save(); renderDailyTable();
-    document.querySelector('.daily-save-btn').onclick=saveDailyCheck;
-    document.getElementById('dailyTodayDate').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-    toast(`${date} 수정됐어요`);
-  };
-  window.scrollTo({top:0,behavior:'smooth'});
+// ── 시트 헬퍼 ──
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+  if(id==='logSheet') renderLogSheet();
 }
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
 
-// ── 모달 ──
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.sheet-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
+});
 
-function openNewTrackModal() { document.getElementById('newTrackName').value=''; openModal('newTrackModal'); setTimeout(()=>document.getElementById('newTrackName').focus(),100); }
-function pickPreset(n) { document.getElementById('newTrackName').value=n; document.getElementById('newTrackName').focus(); }
-function confirmNewTrack() {
-  const n=document.getElementById('newTrackName').value.trim(); if(!n){alert('이름을 입력해주세요');return;}
-  state.tracks.push(makeTrack(n)); save(); closeModal('newTrackModal'); renderKanban(); toast(`"${n}" 트랙 추가됨`);
-}
-
-function openGoalModal(id) {
-  goalTrackId=id; goalStep=0;
-  const t=state.tracks.find(t=>t.id===id);
-  document.getElementById('goalModalSub').textContent=`트랙: ${t.name}`;
-  document.querySelectorAll('.interview-input').forEach(el=>el.value='');
-  document.getElementById('finalGoalInput').value='';
-  renderGoalModal(); openModal('goalModal');
-}
-
-function renderGoalModal() {
-  document.getElementById('progressDots').innerHTML=Array.from({length:4},(_,i)=>`<div class="dot ${i===goalStep?'active':''}"></div>`).join('');
-  document.querySelectorAll('.interview-step').forEach((el,i)=>el.classList.toggle('active',i===goalStep));
-  document.getElementById('goalNextBtn').textContent=goalStep===3?'이 목표로 저장':'다음';
-}
-
-function goalNext() {
-  if(goalStep<3) {
-    if(goalStep===2) {
-      const s=document.getElementById('iAnswer-2').value.trim()||document.getElementById('iAnswer-0').value.trim()||document.getElementById('iAnswer-1').value.trim()||'목표를 직접 써주세요';
-      document.getElementById('suggestionText').textContent=s;
-      document.getElementById('finalGoalInput').value=s;
-    }
-    goalStep++; renderGoalModal();
-  } else {
-    const g=document.getElementById('finalGoalInput').value.trim(); if(!g){alert('목표를 입력해주세요');return;}
-    const t=state.tracks.find(t=>t.id===goalTrackId); if(t){t.goal=g;save();}
-    closeModal('goalModal'); renderKanban(); toast('목표가 저장됐어요');
-  }
-}
-
-function setPump(trackId, value) {
-  const t = state.tracks.find(t=>t.id===trackId);
-  if(t) { t.pumpAction=value; save(); renderKanban(); }
-}
-
+// ── 유틸 ──
+function setInput(id, val) { document.getElementById(id).value=val; document.getElementById(id).focus(); }
 function toast(msg) {
   const el=document.getElementById('toast'); el.textContent=msg;
-  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800);
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500);
 }
 
 // ── 초기화 ──
 const todayKey=new Date().toISOString().slice(0,10);
 if(state.conditionDate!==todayKey){state.condition=null;state.conditionDate=todayKey;save();}
 
-document.addEventListener('click',e=>{
-  if(openMenuId&&!e.target.closest('.track-menu')&&!e.target.closest('.track-menu-btn')){openMenuId=null;renderKanban();}
-});
-
-['newTrackModal','goalModal','pumpSheet'].forEach(id=>{
-  document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(id);});
-});
-
-renderKanban();
+renderCond();
+renderToday();
+updateInboxBadge();
 </script>
 </body>
 </html>
