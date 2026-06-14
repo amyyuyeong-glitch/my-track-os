@@ -5,79 +5,60 @@
  * 앱에서 http://localhost:3001 로 호출
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { spawn } from 'child_process';
 import http from 'http';
 
-const client = new Anthropic(); // ANTHROPIC_API_KEY 환경변수 자동 사용
 const PORT = 3001;
 
-const SYSTEM_PROMPT = `당신은 사용자의 하루 실행 계획을 설계해주는 에이전트입니다.
-
-할 일 제목을 보고 다음을 판단합니다:
-1. 사용자의 목표 중 어느 것과 연결되는지
-2. 30초 안에 할 수 있는 가장 작고 구체적인 첫 번째 행동 (마중물)
-
-마중물 원칙:
-- 말도 안 되게 작고 구체적으로
-- 실패할 수 없을 만큼 쉽게
-- 동사로 끝내기
-- 예: "포트폴리오.psd 열기", "채용공고 탭 열기", "메모 앱에 제목만 쓰기"`;
+// Claude Code CLI 호출 (별도 API 크레딧 불필요 — 구독으로 동작)
+function askClaude(prompt) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('claude', ['-p', prompt], { env: process.env });
+    let out = '', err = '';
+    proc.stdout.on('data', d => out += d);
+    proc.stderr.on('data', d => err += d);
+    proc.on('close', code => {
+      if (code === 0) resolve(out.trim());
+      else reject(new Error(err || `exit ${code}`));
+    });
+  });
+}
 
 async function classify(tasks, goals) {
   const goalsText = goals.length > 0
     ? goals.map(g => `- goalId: "${g.id}", 목표: "${g.name}", 트랙: "${g.track}"`).join('\n')
     : '(설정된 목표 없음)';
-
   const tasksText = tasks.map((t, i) => `${i + 1}. "${t}"`).join('\n');
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [{
-      role: 'user',
-      content: `사용자의 목표 목록:
+  const prompt = `당신은 하루 실행 계획 에이전트입니다. JSON만 출력하세요.
+
+목표 목록:
 ${goalsText}
 
 오늘 할 일:
 ${tasksText}
 
-각 할 일에 대해 JSON 배열로만 응답 (설명 없이):
-[
-  {
-    "index": 1,
-    "goalId": "연결될 목표 ID (없으면 null)",
-    "action": "30초 안에 할 수 있는 구체적인 첫 행동",
-    "scope": "in 또는 out 또는 later"
-  }
-]`
-    }]
-  });
+각 할 일에 대해 아래 JSON 배열로만 응답 (다른 텍스트 없이):
+[{"index":1,"goalId":"목표ID 또는 null","action":"30초 안에 할 수 있는 구체적 첫 행동","scope":"in"}]
 
-  const text = message.content[0].text.trim();
+규칙: action은 말도 안 되게 작고 구체적으로. goalId는 위 목록에서만.`;
+
+  const text = await askClaude(prompt);
   const match = text.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('응답 파싱 실패');
+  if (!match) throw new Error('JSON 파싱 실패');
   return JSON.parse(match[0]);
 }
 
 async function suggest(taskTitle, goalName, trackName) {
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 200,
-    system: SYSTEM_PROMPT,
-    messages: [{
-      role: 'user',
-      content: `할 일: "${taskTitle}"
-${goalName ? `연결된 목표: "${goalName}" (트랙: ${trackName})` : ''}
+  const prompt = `할 일: "${taskTitle}"
+${goalName ? `목표: "${goalName}" (트랙: ${trackName})` : ''}
 
-이 할 일의 마중물 3개를 JSON 배열로만 응답:
-["첫 번째 제안", "두 번째 제안", "세 번째 제안"]`
-    }]
-  });
+이 할 일의 마중물(30초 안에 할 수 있는 매우 구체적인 첫 행동) 3개를 JSON 배열로만 출력:
+["제안1","제안2","제안3"]`;
 
-  const text = message.content[0].text.trim();
+  const text = await askClaude(prompt);
   const match = text.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('응답 파싱 실패');
+  if (!match) throw new Error('JSON 파싱 실패');
   return JSON.parse(match[0]);
 }
 
