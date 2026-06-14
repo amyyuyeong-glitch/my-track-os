@@ -569,7 +569,7 @@ const BACKEND_URL = (() => {
   const h = location.hostname;
   if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3001';
   // Vercel 배포 후 아래 URL을 실제 주소로 교체하세요
-  return localStorage.getItem('trackOS_backendUrl') || '';
+  return localStorage.getItem('trackOS_backendUrl') || 'https://smalldevidetodo.vercel.app';
 })();
 
 // ── 상수 ──
