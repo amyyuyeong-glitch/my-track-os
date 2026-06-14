@@ -647,17 +647,13 @@ let goalSheetId=null, addGoalTrackId=null;
 function loadState() {
   try { const s=localStorage.getItem('trackOS_v8'); if(s) return JSON.parse(s); } catch(e){}
   return {
-    tracks:[
-      {id:uid(),name:'커리어',goals:[{id:uid(),name:'포트폴리오 완성',pumpAction:'',lastDone:null}]},
-      {id:uid(),name:'셀피쉬클럽',goals:[]},
-      {id:uid(),name:'취준',goals:[]},
-    ],
-    inbox:[],      // {id, text, createdAt, status:'pending'|'classified'|'out'|'later', goalId, action, doneAt, failedAt, isToday}
+    tracks:[],
+    inbox:[],
     condition:null, conditionDate:null,
     activityLog:[],
     dailyLog:[],
-    duties:['씻기','먹기','운동','집구하기','청소'],
-    inboxStep:'input', // 'input' | 'review'
+    duties:[],
+    inboxStep:'input',
   };
 }
 
