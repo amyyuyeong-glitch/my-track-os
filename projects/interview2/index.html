@@ -262,6 +262,39 @@
     /* ── 토스트 ── */
     .toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe) + 12px); left: 50%; transform: translateX(-50%) translateY(70px); background: var(--black); color: #fff; padding: 11px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index: 999; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
     .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── 기록 탭 ── */
+    .stats-card { background: var(--white); border-radius: var(--r); padding: 18px 16px; margin-bottom: 12px; }
+    .stats-section-title { font-size: 12px; font-weight: 800; color: var(--g2); margin-bottom: 14px; letter-spacing: 0.03em; }
+    .stats-empty { font-size: 13px; color: var(--g3); text-align: center; padding: 16px 0; }
+    .stats-overview { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .stats-num-block { text-align: center; padding: 10px 4px; background: var(--g5); border-radius: 10px; }
+    .stats-num { font-size: 22px; font-weight: 800; color: var(--black); }
+    .stats-num.green { color: var(--green); }
+    .stats-num.red { color: var(--red); }
+    .stats-num-label { font-size: 10px; color: var(--g2); margin-top: 2px; font-weight: 600; }
+    .stats-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+    .stats-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .stats-bar-wrap { display: flex; flex-direction: column-reverse; align-items: center; gap: 1px; width: 100%; }
+    .stats-bar-seg { width: 100%; border-radius: 3px; min-height: 3px; }
+    .stats-bar-seg.green { background: var(--green); }
+    .stats-bar-seg.red { background: var(--red); }
+    .stats-bar-label { font-size: 9px; color: var(--g3); }
+    .stats-legend { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--g2); margin-top: 10px; }
+    .stats-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .stats-dot.green { background: var(--green); }
+    .stats-dot.red { background: var(--red); }
+    .stats-track-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .stats-track-name { font-size: 12px; font-weight: 700; width: 56px; flex-shrink: 0; }
+    .stats-track-bar-wrap { flex: 1; height: 8px; background: var(--g5); border-radius: 100px; overflow: hidden; }
+    .stats-track-bar { height: 100%; background: var(--black); border-radius: 100px; transition: width 0.5s ease; }
+    .stats-track-count { font-size: 11px; color: var(--g2); font-weight: 700; width: 28px; text-align: right; }
+    .stats-cond-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .stats-cond-dot { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 36px; }
+    .stats-goal-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--g5); }
+    .stats-goal-row:last-child { border-bottom: none; }
+    .stats-goal-track { font-size: 10px; font-weight: 800; color: var(--g2); margin-bottom: 2px; }
+    .stats-goal-name { font-size: 13px; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -333,6 +366,11 @@
   <div id="dailyLogList"></div>
 </div>
 
+<!-- ── 📊 기록 탭 ── -->
+<div class="panel" id="panel-stats">
+  <div id="statsDash"></div>
+</div>
+
 <!-- ── 탭바 ── -->
 <nav class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('today',this)">
@@ -347,6 +385,9 @@
   </button>
   <button class="tab-btn" onclick="switchTab('daily',this)">
     <span class="tab-icon">📅</span><span class="tab-label">데일리</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('stats',this)">
+    <span class="tab-icon">📊</span><span class="tab-label">기록</span>
   </button>
 </nav>
 
@@ -589,6 +630,152 @@ function switchTab(tab, btn) {
   if(tab==='inbox') renderInbox();
   if(tab==='track') renderTrackTab();
   if(tab==='daily') renderDailyTab();
+  if(tab==='stats') renderStats();
+}
+
+function renderStats() {
+  const container = document.getElementById('statsDash');
+  const inbox = state.inbox || [];
+  const allDone = inbox.filter(i => i.doneAt);
+  const allFailed = inbox.filter(i => i.failedAt);
+  const total = allDone.length + allFailed.length;
+  const pct = total ? Math.round(allDone.length / total * 100) : 0;
+
+  // 연속 달성일 (streak)
+  const doneDates = new Set(allDone.map(i => i.doneAt.slice(0,10)));
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(Date.now() - i*86400000).toISOString().slice(0,10);
+    if (doneDates.has(d)) streak++;
+    else break;
+  }
+
+  // 최근 14일 날짜별 완료/실패
+  const days14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const dt = new Date(Date.now() - i*86400000);
+    const key = dt.toISOString().slice(0,10);
+    const done = allDone.filter(t => t.doneAt.slice(0,10)===key).length;
+    const fail = allFailed.filter(t => t.failedAt.slice(0,10)===key).length;
+    days14.push({ key, done, fail, label: dt.getDate()+'일' });
+  }
+  const maxDay = Math.max(...days14.map(d => d.done + d.fail), 1);
+
+  // 트랙별 실행 비중 (activityLog 기반)
+  const log = state.activityLog || [];
+  const trackCount = {};
+  log.forEach(e => { if(e.trackName) trackCount[e.trackName]=(trackCount[e.trackName]||0)+1; });
+  const trackTotal = Object.values(trackCount).reduce((a,b)=>a+b,0)||1;
+  const tracksSorted = Object.entries(trackCount).sort((a,b)=>b[1]-a[1]);
+
+  // 컨디션 히스토리 (activityLog에서 날짜별 첫 항목)
+  const condByDay = {};
+  log.forEach(e => {
+    const day = e.timestamp.slice(0,10);
+    if (!condByDay[day] && e.conditionEmoji && e.conditionEmoji!=='—')
+      condByDay[day] = { emoji:e.conditionEmoji, name:e.conditionName };
+  });
+  const condDays = Object.entries(condByDay).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);
+
+  // 목표별 완료 횟수
+  const goalDoneCount = {};
+  allDone.forEach(i => { if(i.goalId) goalDoneCount[i.goalId]=(goalDoneCount[i.goalId]||0)+1; });
+  const goals = state.tracks.flatMap(tr=>tr.goals.map(g=>({...g,trackName:tr.name})));
+
+  container.innerHTML = `
+    <div class="stats-card">
+      <div class="stats-section-title">한눈에 보기</div>
+      <div class="stats-overview">
+        <div class="stats-num-block">
+          <div class="stats-num green">${allDone.length}</div>
+          <div class="stats-num-label">총 완료</div>
+        </div>
+        <div class="stats-num-block">
+          <div class="stats-num red">${allFailed.length}</div>
+          <div class="stats-num-label">총 실패</div>
+        </div>
+        <div class="stats-num-block">
+          <div class="stats-num">${pct}%</div>
+          <div class="stats-num-label">완료율</div>
+        </div>
+        <div class="stats-num-block">
+          <div class="stats-num">${streak}</div>
+          <div class="stats-num-label">연속 달성</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-section-title">최근 14일 완료/실패 추이</div>
+      ${days14.every(d=>d.done+d.fail===0)
+        ? '<div class="stats-empty">아직 완료·실패 기록이 없어요</div>'
+        : `<div class="stats-bars">
+            ${days14.map(d=>`
+              <div class="stats-bar-col">
+                <div class="stats-bar-wrap">
+                  ${d.done ? `<div class="stats-bar-seg green" style="height:${Math.round(d.done/maxDay*60)}px"></div>` : ''}
+                  ${d.fail ? `<div class="stats-bar-seg red" style="height:${Math.round(d.fail/maxDay*60)}px"></div>` : ''}
+                  ${!d.done&&!d.fail ? `<div style="height:3px;width:100%;background:var(--g5);border-radius:3px"></div>` : ''}
+                </div>
+                <div class="stats-bar-label">${d.label}</div>
+              </div>`).join('')}
+          </div>
+          <div class="stats-legend">
+            <span class="stats-dot green"></span> 완료
+            <span class="stats-dot red" style="margin-left:12px"></span> 실패
+          </div>`}
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-section-title">트랙별 실행 비중</div>
+      ${!tracksSorted.length
+        ? '<div class="stats-empty">아직 실행 기록이 없어요</div>'
+        : tracksSorted.map(([name,count])=>`
+            <div class="stats-track-row">
+              <div class="stats-track-name">${name}</div>
+              <div class="stats-track-bar-wrap">
+                <div class="stats-track-bar" style="width:${Math.round(count/trackTotal*100)}%"></div>
+              </div>
+              <div class="stats-track-count">${count}회</div>
+            </div>`).join('')}
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-section-title">컨디션 히스토리</div>
+      ${!condDays.length
+        ? '<div class="stats-empty">아직 컨디션 기록이 없어요</div>'
+        : `<div class="stats-cond-grid">
+            ${condDays.map(([date,c])=>{
+              const dt = new Date(date+'T00:00:00');
+              return `<div class="stats-cond-dot" title="${c.name}">
+                <div style="font-size:20px">${c.emoji}</div>
+                <div style="font-size:10px;color:var(--g2)">${dt.getMonth()+1}/${dt.getDate()}</div>
+              </div>`;
+            }).join('')}
+          </div>`}
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-section-title">목표 현황</div>
+      ${!goals.length
+        ? '<div class="stats-empty">아직 목표가 없어요</div>'
+        : goals.map(g=>{
+            const cnt = goalDoneCount[g.id]||0;
+            const d = g.lastDone ? Math.floor((Date.now()-new Date(g.lastDone))/86400000) : null;
+            const since = d===null?'아직 시작 안 함':d===0?'오늘 활동':d===1?'어제 활동':`${d}일 전 활동`;
+            return `<div class="stats-goal-row">
+              <div>
+                <div class="stats-goal-track">${g.trackName}</div>
+                <div class="stats-goal-name">${g.name}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:13px;font-weight:700;color:${cnt>0?'var(--green)':'var(--g2)'}">${cnt}회 완료</div>
+                <div style="font-size:11px;color:var(--g2)">${since}</div>
+              </div>
+            </div>`;
+          }).join('')}
+    </div>
+  `;
 }
 
 // ── API 설정 ──
