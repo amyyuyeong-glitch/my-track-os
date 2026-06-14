@@ -295,6 +295,13 @@
     .stats-goal-row:last-child { border-bottom: none; }
     .stats-goal-track { font-size: 10px; font-weight: 800; color: var(--g2); margin-bottom: 2px; }
     .stats-goal-name { font-size: 13px; font-weight: 700; }
+
+    /* ── 온보딩 ── */
+    .onboard-chip { padding: 9px 16px; border-radius: 100px; border: 2px solid var(--g5); background: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .onboard-chip.selected { border-color: var(--black); background: var(--black); color: #fff; }
+    .onboard-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; }
+    .onboard-goal-block { margin-bottom: 14px; }
+    .onboard-goal-label { font-size: 11px; font-weight: 800; color: var(--g2); margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -513,6 +520,34 @@
 
     <div class="btn-row" style="margin-top:20px">
       <button class="btn-secondary" onclick="closeSheet('settingsSheet')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 온보딩 -->
+<div class="sheet-overlay" id="onboardingSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="onboard-step-1">
+      <div class="sheet-title">안녕하세요 👋</div>
+      <div class="sheet-sub">지금 병렬로 굴리고 있는 게 뭐예요?<br/>해당하는 것들을 골라봐요</div>
+      <div class="onboard-chip-wrap" id="onboardChips"></div>
+      <div id="onboard-custom-wrap" style="display:none;margin-bottom:16px">
+        <input class="sheet-input" id="onboardCustomInput" placeholder="직접 입력 후 Enter"
+          style="margin:0" onkeydown="if(event.key==='Enter')addOnboardCustom()" />
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="onboardNext()">다음 →</button>
+      </div>
+    </div>
+    <div id="onboard-step-2" style="display:none">
+      <div class="sheet-title">목표 하나만</div>
+      <div class="sheet-sub">각 트랙에서 이번 달 이루고 싶은 것 하나씩만<br/>지금 모르면 비워도 돼요</div>
+      <div id="onboardGoalInputs" style="margin:16px 0"></div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="finishOnboarding(false)">나중에 추가할게요</button>
+        <button class="btn-primary" onclick="finishOnboarding(true)">시작하기</button>
+      </div>
     </div>
   </div>
 </div>
@@ -813,42 +848,76 @@ function renderStats() {
   `;
 }
 
-// ── API 설정 ──
-function saveApiKey() {
-  const url = document.getElementById('apiKeyInput').value.trim();
-  if (url && !url.startsWith('https://')) {
-    toast('https://로 시작하는 Worker URL을 입력해요');
-    return;
-  }
-  state.proxyUrl = url;
-  // 혹시 이전에 저장된 키가 있다면 제거
-  delete state.apiKey;
-  save();
-  updateApiStatus();
-  closeSheet('settingsSheet');
-  toast(url ? 'Worker 연결됐어요 ✓' : '연결 해제됐어요');
+// ── 온보딩 ──
+const ONBOARD_PRESETS = ['커리어', '취준', '사이드 프로젝트', '건강', '학습', '자기계발'];
+let onboardSelected = new Set();
+
+function renderOnboardChips() {
+  const wrap = document.getElementById('onboardChips');
+  if (!wrap) return;
+  wrap.innerHTML = ONBOARD_PRESETS.map(t =>
+    `<button class="onboard-chip ${onboardSelected.has(t)?'selected':''}" onclick="toggleOnboardTrack('${t}')">${t}</button>`
+  ).join('') + `<button class="onboard-chip ${onboardSelected.has('__custom')?'selected':''}" onclick="toggleOnboardCustom()">+ 직접 입력</button>`;
 }
 
-function updateApiStatus() {
-  const el = document.getElementById('apiStatus');
-  if (!el) return;
-  if (state.proxyUrl) {
-    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--green-bg);border-radius:10px">
-      <span style="font-size:16px">✓</span>
-      <div>
-        <div style="font-size:13px;font-weight:700;color:var(--green)">AI 분류 연결됨</div>
-        <div style="font-size:11px;color:var(--green);opacity:0.8">${state.proxyUrl.replace('https://','').slice(0,30)}...</div>
-      </div>
-    </div>`;
-    document.getElementById('apiKeyInput').value = state.proxyUrl;
-  } else {
-    el.innerHTML = `<div style="padding:10px 14px;background:var(--g5);border-radius:10px;font-size:12px;color:var(--g2)">
-      미연결 — 기본 자동 분류만 사용돼요
-    </div>`;
-  }
-  const btn = document.getElementById('settingsBtn');
-  if (btn) btn.textContent = state.proxyUrl ? '🔑' : '⚙️';
+function toggleOnboardTrack(name) {
+  onboardSelected.has(name) ? onboardSelected.delete(name) : onboardSelected.add(name);
+  renderOnboardChips();
 }
+
+function toggleOnboardCustom() {
+  const wrap = document.getElementById('onboard-custom-wrap');
+  const show = wrap.style.display === 'none';
+  wrap.style.display = show ? 'block' : 'none';
+  if (show) setTimeout(()=>document.getElementById('onboardCustomInput').focus(), 50);
+}
+
+function addOnboardCustom() {
+  const input = document.getElementById('onboardCustomInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (!ONBOARD_PRESETS.includes(name)) ONBOARD_PRESETS.splice(-0, 0, name);
+  onboardSelected.add(name);
+  input.value = '';
+  document.getElementById('onboard-custom-wrap').style.display = 'none';
+  renderOnboardChips();
+}
+
+function onboardNext() {
+  if (onboardSelected.size === 0) { toast('트랙을 하나 이상 골라요'); return; }
+  document.getElementById('onboard-step-1').style.display = 'none';
+  document.getElementById('onboard-step-2').style.display = 'block';
+  const tracks = [...onboardSelected].filter(t => t !== '__custom');
+  document.getElementById('onboardGoalInputs').innerHTML = tracks.map(t => `
+    <div class="onboard-goal-block">
+      <div class="onboard-goal-label">${t}</div>
+      <input class="sheet-input" id="og-${t}" placeholder="이번 달 목표 하나만..." style="margin:0" />
+    </div>`).join('');
+}
+
+function finishOnboarding(saveGoals) {
+  const tracks = [...onboardSelected].filter(t => t !== '__custom');
+  state.tracks = tracks.map(name => {
+    const tr = makeTrack(name);
+    if (saveGoals) {
+      const input = document.getElementById(`og-${name}`);
+      const goalName = input?.value.trim();
+      if (goalName) tr.goals.push(makeGoal(goalName));
+    }
+    return tr;
+  });
+  save();
+  closeSheet('onboardingSheet');
+  renderTrackTab();
+  // 준비 탭으로 이동
+  const inboxBtn = [...document.querySelectorAll('.tab-btn')].find(b=>b.getAttribute('onclick')?.includes("'inbox'"));
+  if (inboxBtn) inboxBtn.click();
+  toast('시작해봐요! 오늘 할 일을 적어봐요 ✍️');
+}
+
+// 온보딩 시트가 열릴 때 칩 렌더링
+document.addEventListener('DOMContentLoaded', ()=>{}, false);
+(function initOnboarding() { renderOnboardChips(); })();
 
 function resetAll() {
   if (!confirm('모든 데이터를 초기화할까요? 복구할 수 없어요.')) return;
@@ -856,66 +925,6 @@ function resetAll() {
   location.reload();
 }
 
-// ── Claude API 분류 ──
-const LOCAL_AGENT = 'http://localhost:3001';
-
-async function callAgent(endpoint, body) {
-  // 1순위: 로컬 에이전트, 2순위: Cloudflare 프록시
-  const urls = [
-    LOCAL_AGENT + endpoint,
-    state.proxyUrl ? state.proxyUrl : null,
-  ].filter(Boolean);
-
-  for (const url of urls) {
-    try {
-      const isLocal = url.startsWith(LOCAL_AGENT);
-      const fetchBody = isLocal ? body : {
-        model: 'claude-haiku-4-5', max_tokens: 1024,
-        messages: [{ role: 'user', content: JSON.stringify(body) }]
-      };
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fetchBody),
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) continue;
-      return { data: await res.json(), isLocal };
-    } catch(e) {
-      continue;
-    }
-  }
-  return null;
-}
-
-async function classifyWithClaude(items) {
-  const proxyUrl = state.proxyUrl;
-  if (!proxyUrl && !(await isAgentRunning())) return null;
-
-  const allGoals = state.tracks.flatMap(tr =>
-    tr.goals.map(g => ({id:g.id, name:g.name, track:tr.name}))
-  );
-
-  const result = await callAgent('/classify', {
-    tasks: items.map(i => i.text),
-    goals: allGoals,
-  });
-
-  if (!result) return null;
-  return result.data;
-}
-
-async function isAgentRunning() {
-  try {
-    const res = await fetch(LOCAL_AGENT + '/classify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tasks: ['test'], goals: [] }),
-      signal: AbortSignal.timeout(1000),
-    });
-    return true;
-  } catch(e) { return false; }
-}
 
 // ── 분류 로직 (스마트 자동분류) ──
 function autoClassify(text) {
@@ -970,7 +979,7 @@ function renderInbox() {
     <div class="card">
       <div class="capture-header">
         <div class="capture-title">아침 준비</div>
-        <div class="capture-sub">오늘 해야 할 일을 한 줄씩 써요.<br/>자동으로 목표에 연결하고 실행계획을 만들어드려요.</div>
+        <div class="capture-sub">오늘 해야 할 일을 한 줄씩 써요.<br/>목표에 연결하고 실행 계획을 세워요.</div>
       </div>
       <textarea class="capture-textarea" id="captureArea" placeholder="예시:\n포트폴리오 디자인 섹션 작성\n팀장님께 보고서 제출\n운동 30분\n셀피쉬클럽 다음 모임 기획"></textarea>
       <div class="capture-hint">한 줄에 하나씩 입력 → 분류하기 버튼으로 자동 정리됩니다</div>
@@ -982,7 +991,7 @@ function renderInbox() {
     </div>`;
   }
 
-  html += `<button class="btn-primary" onclick="startClassify()">자동 분류하기</button>`;
+  html += `<button class="btn-primary" onclick="startClassify()">분류 시작</button>`;
 
   if (classified.length > 0) {
     html += `<div class="divider"></div>
@@ -1090,7 +1099,7 @@ function renderReview(pending, container) {
 
       <div class="steps-label">
         <span>실행 계획</span>
-        <button class="ai-badge" onclick="reSuggest('${item.id}')">✦ AI 제안</button>
+        <button class="ai-badge" onclick="reSuggest('${item.id}')">💡 제안</button>
       </div>
       <div class="steps-list-edit" id="steps-list-${item.id}">${stepsHtml}</div>
       <button class="add-step-btn" onclick="addStep('${item.id}')">+ 단계 추가</button>
@@ -1274,31 +1283,6 @@ async function startClassify() {
   if (area) area.value = '';
   save();
 
-  // AI 분류 시도
-  if (state.proxyUrl) {
-    const btn = document.querySelector('[onclick="startClassify()"]');
-    if (btn) { btn.textContent = '✦ AI 분류 중...'; btn.disabled = true; }
-    try {
-      const results = await classifyWithClaude(newItems);
-      if (results) {
-        results.forEach(r => {
-          const item = newItems[r.index - 1];
-          if (item) {
-            if (r.goalId) item._suggestedGoalId = r.goalId;
-            if (r.action) item._suggestedAction = r.action;
-          }
-        });
-        save();
-        toast('✦ AI 분류 완료');
-      }
-    } catch(e) {
-      console.error(e);
-      toast(`AI 오류: ${e.message} — 기본 분류로 진행해요`);
-    } finally {
-      if (btn) { btn.textContent = '자동 분류하기'; btn.disabled = false; }
-    }
-  }
-
   renderInbox();
 }
 
@@ -1401,7 +1385,7 @@ function importClaudeResult() {
   toast(`${done}개 분류 완료 ✓`);
 }
 
-async function reSuggest(itemId) {
+function reSuggest(itemId) {
   const item = (state.inbox||[]).find(i=>i.id===itemId);
   if (!item) return;
 
@@ -1409,29 +1393,8 @@ async function reSuggest(itemId) {
   const goalId = goalSel?.value;
   const g = findGoalById(goalId);
   const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
-  // actionEl 제거 — steps 방식으로 변경됨
   const badge = document.querySelector(`#classify-${itemId} .ai-badge`);
 
-  // 에이전트 호출 시도
-  if (badge) { badge.textContent = '✦ 생각 중...'; badge.disabled = true; }
-
-  try {
-    const result = await callAgent('/suggest', {
-      task: item.text,
-      goalName: g?.name || '',
-      trackName: tr?.name || '',
-    });
-
-    if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
-      reviewSteps[itemId] = result.data;
-      reRenderSteps(itemId);
-      if (badge) { badge.textContent = '✦ AI 제안 — 다시 받기'; badge.disabled = false; }
-      toast('✦ AI가 실행 계획을 제안했어요');
-      return;
-    }
-  } catch(e) {}
-
-  // 폴백: 룰 기반 (3개 제안)
   let suggestions = [];
   for (const [kw, action] of Object.entries(ACTION_TEMPLATES)) {
     if (item.text.includes(kw)) suggestions.push(action);
@@ -1442,7 +1405,7 @@ async function reSuggest(itemId) {
 
   reviewSteps[itemId] = suggestions;
   reRenderSteps(itemId);
-  if (badge) { badge.textContent = '✦ 자동 제안 — 다시 받기'; badge.disabled = false; }
+  if (badge) { badge.textContent = '💡 제안 — 다시 받기'; badge.disabled = false; }
 }
 
 function updateBadge() {
@@ -1819,7 +1782,7 @@ function renderDailyLog(){
 }
 
 // ── 시트 ──
-function openSheet(id){document.getElementById(id).classList.add('open');if(id==='logSheet')renderLogSheet();if(id==='settingsSheet')updateApiStatus();}
+function openSheet(id){document.getElementById(id).classList.add('open');if(id==='logSheet')renderLogSheet();}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.sheet-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 
@@ -1838,7 +1801,7 @@ if(state.conditionDate!==todayKey){
 
 renderToday();
 updateBadge();
-updateApiStatus();
+if (state.tracks.length === 0) openSheet('onboardingSheet');
 </script>
 </body>
 </html>
