@@ -470,7 +470,7 @@
   </div>
 </div>
 
-<!-- 목표 상세/마중물 -->
+<!-- 목표 상세/시작행동 -->
 <div class="sheet-overlay" id="goalSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -486,8 +486,8 @@
     </div>
     <div class="divider"></div>
     <div class="pump-q" id="pumpQ"></div>
-    <div class="pump-sub">30초 안에 할 수 있는 것 하나만</div>
-    <input class="sheet-input" id="pumpInput" type="text" placeholder="직접 입력..." onkeydown="if(event.key==='Enter')savePump()" />
+    <div class="pump-sub">30초 안에 할 수 있는 시작행동 하나만</div>
+    <input class="sheet-input" id="pumpInput" type="text" placeholder="시작행동 입력..." onkeydown="if(event.key==='Enter')savePump()" />
     <div class="pump-examples" id="pumpExamples"></div>
     <div class="btn-row">
       <button class="btn-primary" onclick="savePump()">저장</button>
@@ -588,7 +588,7 @@
         <div style="font-size:12px;font-weight:800;color:#888;margin-bottom:8px">하루 흐름</div>
         <div style="font-size:13px;color:#333;line-height:1.8">
           1️⃣ 📥 준비 — 할 일 입력 + 목표 연결<br/>
-          2️⃣ 🎯 오늘 — 마중물로 하나씩 시작<br/>
+          2️⃣ 🎯 오늘 — 시작행동으로 하나씩 시작<br/>
           3️⃣ 🌙 마무리 — 완료 체크 + 루틴 기록
         </div>
       </div>
@@ -1802,7 +1802,7 @@ function renderTrackTab() {
         return `<div class="goal-row" onclick="openGoalSheet('${g.id}')">
           <div class="goal-row-info">
             <div class="goal-row-name">${g.name}</div>
-            <div class="goal-row-pump">${g.pumpAction||'마중물 없음'}</div>
+            <div class="goal-row-pump">${g.pumpAction||'시작행동 없음'}</div>
           </div>
           <span class="goal-badge ${badge}">${label}</span>
           <button class="goal-del-btn" onclick="event.stopPropagation();deleteGoalDirect('${g.id}')">×</button>
