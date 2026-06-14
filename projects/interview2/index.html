@@ -564,6 +564,14 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── 백엔드 URL (로컬: agent.js, 배포: Vercel) ──
+const BACKEND_URL = (() => {
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3001';
+  // Vercel 배포 후 아래 URL을 실제 주소로 교체하세요
+  return localStorage.getItem('trackOS_backendUrl') || '';
+})();
+
 // ── 상수 ──
 const CONDITIONS = [
   {id:'great',  e:'🔥',n:'에너지 넘침',t:'4시간+',    v:100,c:'#ff6b35',bg:'#fff3ee',s:'가장 중요한 것부터 집중해요.',r:'important'},
@@ -1399,7 +1407,8 @@ async function reSuggest(itemId) {
 
   let suggestions = null;
   try {
-    const resp = await fetch('http://localhost:3001/suggest', {
+    if (!BACKEND_URL) throw new Error('no backend');
+    const resp = await fetch(`${BACKEND_URL}/suggest`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ task: item.text, goalName: g?.name||'', trackName: tr?.name||'' }),
