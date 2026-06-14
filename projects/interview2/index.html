@@ -1708,7 +1708,9 @@ function openAddGoal(trackId) {
 }
 
 function confirmAddGoal() {
-  const n=document.getElementById('newGoalName').value.trim(); if(!n) return;
+  const input=document.getElementById('newGoalName');
+  const n=input.value.trim(); if(!n) return;
+  input.value=''; // 중복 호출 방지
   const tr=state.tracks.find(t=>t.id===addGoalTrackId); if(!tr) return;
   tr.goals.push(makeGoal(n)); save(); closeSheet('addGoalSheet'); renderTrackTab();
   toast(`목표 추가됨`);
