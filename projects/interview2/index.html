@@ -309,6 +309,7 @@
 <div class="top-bar">
   <span class="logo">내 트랙 OS</span>
   <div style="display:flex;gap:8px">
+    <button class="icon-btn" onclick="openSheet('guideSheet')" title="가이드">?</button>
     <button class="icon-btn" onclick="openSheet('logSheet')">📋</button>
     <button class="icon-btn" onclick="openSheet('settingsSheet')" id="settingsBtn" title="설정">⚙️</button>
   </div>
@@ -498,9 +499,10 @@
 <div class="sheet-overlay" id="finishSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">하루 마무리</div>
-    <div class="sheet-sub">오늘 각 항목이 어떻게 됐는지 확인해요</div>
+    <div class="sheet-title">하루 마무리 🌙</div>
+    <div class="sheet-sub">할 일 결과 + 오늘 루틴 한번에</div>
     <div id="finishList"></div>
+    <div id="finishDutySection"></div>
     <button class="btn-primary" style="margin-top:16px" onclick="confirmFinish()">마무리 완료</button>
   </div>
 </div>
@@ -528,8 +530,25 @@
 <div class="sheet-overlay" id="onboardingSheet">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div id="onboard-step-1">
-      <div class="sheet-title">안녕하세요 👋</div>
+    <div id="onboard-step-0">
+      <div class="sheet-title">내 트랙 OS</div>
+      <div class="sheet-sub">브레인포그가 와도 내 방향을 잃지 않게</div>
+      <div style="margin:20px 0;display:flex;flex-direction:column;gap:10px">
+        <div style="background:#f5f5f5;border-radius:12px;padding:16px">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px">🗂 트랙</div>
+          <div style="font-size:13px;color:#444;line-height:1.6">내가 지금 굴리고 있는 목표와 할일<br/><span style="color:#999">예) 커리어, 취준, 사이드프로젝트</span></div>
+        </div>
+        <div style="background:#f5f5f5;border-radius:12px;padding:16px">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px">🎯 목표</div>
+          <div style="font-size:13px;color:#444;line-height:1.6">이번 달 그 트랙에서 이루고 싶은 것 하나<br/><span style="color:#999">예) 포트폴리오 완성, 공고 3개 지원</span></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="showOnboardStep(1)">이해했어요 →</button>
+      </div>
+    </div>
+    <div id="onboard-step-1" style="display:none">
+      <div class="sheet-title">어떤 트랙이 있어요? 👋</div>
       <div class="sheet-sub">지금 병렬로 굴리고 있는 게 뭐예요?<br/>해당하는 것들을 골라봐요</div>
       <div class="onboard-chip-wrap" id="onboardChips"></div>
       <div id="onboard-custom-wrap" style="display:none;margin-bottom:16px">
@@ -548,6 +567,49 @@
         <button class="btn-secondary" onclick="finishOnboarding(false)">나중에 추가할게요</button>
         <button class="btn-primary" onclick="finishOnboarding(true)">시작하기</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 가이드 시트 -->
+<div class="sheet-overlay" id="guideSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">사용 가이드</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0">
+      <div style="background:#f5f5f5;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:800;color:#888;margin-bottom:8px">개념</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">🗂 트랙</div>
+        <div style="font-size:13px;color:#444;line-height:1.5;margin-bottom:10px">내가 지금 굴리고 있는 목표와 할일<br/><span style="color:#999">예) 커리어, 취준, 사이드프로젝트</span></div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">🎯 목표</div>
+        <div style="font-size:13px;color:#444;line-height:1.5">이번 달 그 트랙에서 이루고 싶은 것 하나<br/><span style="color:#999">예) 포트폴리오 완성, 공고 3개 지원</span></div>
+      </div>
+      <div style="background:#f5f5f5;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:800;color:#888;margin-bottom:8px">하루 흐름</div>
+        <div style="font-size:13px;color:#333;line-height:1.8">
+          1️⃣ 📥 준비 — 할 일 입력 + 목표 연결<br/>
+          2️⃣ 🎯 오늘 — 마중물로 하나씩 시작<br/>
+          3️⃣ 🌙 마무리 — 완료 체크 + 루틴 기록
+        </div>
+      </div>
+      <div style="background:#fff3e0;border-radius:12px;padding:14px">
+        <div style="font-size:12px;color:#e65100;font-weight:700">💡 핵심 습관</div>
+        <div style="font-size:12px;color:#bf360c;margin-top:4px;line-height:1.6">할 일을 추가할 때 목표에 꼭 연결하세요.<br/>연결해야 기록에 남고, 방향성을 잃지 않아요.</div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="closeSheet('guideSheet')">닫기</button>
+  </div>
+</div>
+
+<!-- 목표 미연결 경고 -->
+<div class="sheet-overlay" id="noGoalSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="font-size:17px">목표 연결 없는 항목이 있어요</div>
+    <div class="sheet-sub" style="margin-top:8px">목표가 없으면 기록에 남지 않아요.<br/>방향성을 잃지 않으려면 연결하는 게 좋아요.</div>
+    <div class="btn-row" style="margin-top:24px">
+      <button class="btn-secondary" onclick="closeSheet('noGoalSheet')">목표 연결하기</button>
+      <button class="btn-primary" onclick="closeSheet('noGoalSheet');doConfirmReview()">그냥 추가</button>
     </div>
   </div>
 </div>
@@ -641,6 +703,7 @@ let state = loadState();
 
 // 데일리 임시
 let dStates=new Set(), dDuties=new Set(), dGreyday=false;
+let finishDuties=new Set();
 // 시트 컨텍스트
 let goalSheetId=null, addGoalTrackId=null;
 
@@ -874,6 +937,10 @@ function toggleOnboardCustom() {
   const show = wrap.style.display === 'none';
   wrap.style.display = show ? 'block' : 'none';
   if (show) setTimeout(()=>document.getElementById('onboardCustomInput').focus(), 50);
+}
+
+function showOnboardStep(n) {
+  [0,1,2].forEach(i=>{ const el=document.getElementById(`onboard-step-${i}`); if(el) el.style.display=i===n?'':'none'; });
 }
 
 function addOnboardCustom() {
@@ -1299,6 +1366,16 @@ function cancelReview() {
 
 function confirmReview() {
   const pending = (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday);
+  const hasNoGoal = pending.some(item => {
+    const v = document.getElementById(`sel-goal-${item.id}`)?.value || item._suggestedGoalId || '';
+    return !v || v === '';
+  });
+  if (hasNoGoal) { openSheet('noGoalSheet'); return; }
+  doConfirmReview();
+}
+
+function doConfirmReview() {
+  const pending = (state.inbox||[]).filter(i=>i.status==='pending'&&i.isToday);
   pending.forEach(item => {
     const goalSel = document.getElementById(`sel-goal-${item.id}`)?.value
                   || item._suggestedGoalId || '';
@@ -1318,7 +1395,6 @@ function confirmReview() {
     } else if (goalSel) {
       item.goalId=goalSel; item.action=action; item.steps=steps; item.status='classified';
     } else {
-      // 목표 미선택 → 보류
       item.status='later'; item.isToday=false;
     }
     delete reviewSteps[item.id];
@@ -1633,7 +1709,6 @@ function logActivity(item) {
 function openFinish() {
   const unfinished = (state.inbox||[]).filter(i=>i.status==='classified'&&i.isToday&&!i.doneAt&&!i.failedAt);
   if (!unfinished.length) { toast('미완료 항목이 없어요'); return; }
-  const g_map = {};
   document.getElementById('finishList').innerHTML = unfinished.map(item=>{
     const g = findGoalById(item.goalId);
     const tr = g ? state.tracks.find(t=>t.goals.some(gg=>gg.id===g.id)) : null;
@@ -1648,7 +1723,39 @@ function openFinish() {
       </div>
     </div>`;
   }).join('');
+
+  // 루틴 체크 섹션
+  const todayDate = new Date().toISOString().slice(0,10);
+  const todayLog = (state.dailyLog||[]).find(e=>e.date===todayDate);
+  finishDuties = new Set(todayLog?.duties||[]);
+  const dutySection = document.getElementById('finishDutySection');
+  if ((state.duties||[]).length) {
+    dutySection.innerHTML = `
+      <div style="margin-top:20px;border-top:1px solid #eee;padding-top:16px">
+        <div style="font-size:11px;font-weight:800;color:#999;margin-bottom:12px">오늘 루틴</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="finishDutyChips">
+          ${(state.duties).map(d=>`
+            <div class="chip${finishDuties.has(d)?' on':''}"
+              style="${finishDuties.has(d)?'background:var(--black);border-color:var(--black);color:#fff':''}"
+              onclick="toggleFinishDuty('${d}',this)">${finishDuties.has(d)?'✓ ':''}${d}</div>
+          `).join('')}
+        </div>
+      </div>`;
+  } else { dutySection.innerHTML = ''; }
+
   openSheet('finishSheet');
+}
+
+function toggleFinishDuty(d, el) {
+  if (finishDuties.has(d)) {
+    finishDuties.delete(d);
+    el.classList.remove('on'); el.style.cssText='';
+    el.textContent=d;
+  } else {
+    finishDuties.add(d);
+    el.classList.add('on'); el.style.background='var(--black)'; el.style.borderColor='var(--black)'; el.style.color='#fff';
+    el.textContent='✓ '+d;
+  }
 }
 
 function setFinish(itemId, result) {
@@ -1665,10 +1772,17 @@ function confirmFinish() {
     const failBtn = document.getElementById(`fc-fail-${item.id}`);
     if (doneBtn?.classList.contains('sel')) { item.doneAt=new Date().toISOString(); logActivity(item); }
     else if (failBtn?.classList.contains('sel')) { item.failedAt=new Date().toISOString(); }
-    else { item.failedAt=new Date().toISOString(); } // 선택 안 하면 못함으로
+    else { item.failedAt=new Date().toISOString(); }
   });
+  // 루틴 기록 저장
+  const todayDate = new Date().toISOString().slice(0,10);
+  if (!state.dailyLog) state.dailyLog=[];
+  const idx = state.dailyLog.findIndex(e=>e.date===todayDate);
+  if (idx>=0) { state.dailyLog[idx].duties=[...finishDuties]; }
+  else { state.dailyLog.unshift({date:todayDate,states:[],duties:[...finishDuties],greyday:false,notes:'',eating:'',emotion:''}); }
+  dDuties = new Set(finishDuties); // 데일리 탭과 동기화
   save(); closeSheet('finishSheet'); renderToday(); updateBadge();
-  toast('마무리 완료 🌙 데일리 체크도 해보세요');
+  toast('마무리 완료 🌙');
 }
 
 // ── 트랙 탭 ──
